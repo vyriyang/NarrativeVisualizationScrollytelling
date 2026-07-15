@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Interactive Scrollytelling — Iran War Survey</title>
+<style>
+    :root {
+      --navy: #08284a;
+      --cream: #f5efe2;
+      --paper: #fffdf8;
+      --muted: #6e6e6e;
+      --line: #e6dfd1;
+      --orange: #d86a32;
+      --red: #c7432b;
+      --blue: #1f5fae;
+      --green: #55743f;
+      --gold: #c98318;
+      --tan: #c8b18a;
+      --gray: #9a9a9a;
+      --light-gray: #e6e6e6;
+      --confident: #6f8c72;
+      --not-confident: #8b6f9c;
+      --shadow: 0 18px 50px rgba(8, 40, 74, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background: linear-gradient(90deg, #fbf7ef 0%, #fffdf8 22%, #fffdf8 100%);
+      color: var(--navy);
+    }
+
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: linear-gradient(90deg, #061d35, #08365f);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: .03em;
+    }
+
+    .topbar .meta { font-weight: 500; font-size: 14px; opacity: .95; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      min-height: 100vh;
+      padding-top: 54px;
+    }
+
+    aside {
+      position: sticky;
+      top: 54px;
+      height: calc(100vh - 54px);
+      border-right: 1px solid var(--line);
+      background: rgba(255,255,255,.58);
+      backdrop-filter: blur(10px);
+      padding: 30px 20px 18px 22px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    aside::-webkit-scrollbar { width: 6px; }
+    aside::-webkit-scrollbar-thumb { background: rgba(8,40,74,.18); border-radius: 999px; }
+
+    .rail {
+      position: relative;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(18px, 3.1vh, 38px);
+      padding-bottom: 10px;
+    }
+    .rail::before {
+      content: "";
+      position: absolute;
+      left: 18px;
+      top: 8px;
+      bottom: 78px;
+      width: 2px;
+      background: #c8c8c8;
+    }
+
+    .nav-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr);
+      gap: 14px;
+      margin-bottom: 0;
+      cursor: pointer;
+      color: var(--navy);
+      text-decoration: none;
+      align-items: start;
+    }
+
+    .dot {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      border: 2px solid #a7a7a7;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      z-index: 2;
+      transition: .25s ease;
+    }
+
+    .nav-item.active .dot {
+      background: var(--navy);
+      color: #fff;
+      border-color: var(--navy);
+      transform: scale(1.05);
+    }
+
+    .nav-copy h3 { margin: 1px 0 6px; font-size: 15.5px; line-height: 1.22; transition: color .25s ease; }
+    .nav-copy p { margin: 0; font-size: 12.5px; line-height: 1.38; color: #111; transition: color .25s ease; }
+    .nav-item.active .nav-copy h3 { color: var(--navy); font-weight: 900; }
+    .nav-item.active .nav-copy p { color: #111; }
+
+    .scroll-note {
+      position: sticky;
+      bottom: 10px;
+      left: 0;
+      width: 170px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+      z-index: 10;
+      pointer-events: none;
+      background: rgba(255,255,255,.94);
+      padding: 7px 9px;
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 10px 28px rgba(8,40,74,.08);
+      margin-top: auto;
+    }
+
+    .mouse { width: 20px; height: 30px; border: 2px solid #aaa; border-radius: 999px; position: relative; flex: 0 0 auto; }
+    .mouse::after {
+      content: "";
+      position: absolute;
+      width: 4px;
+      height: 8px;
+      border-radius: 99px;
+      background: #aaa;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: wheel 1.4s infinite;
+    }
+    @keyframes wheel {
+      0% { opacity: 0; transform: translate(-50%, 0); }
+      30% { opacity: 1; }
+      100% { opacity: 0; transform: translate(-50%, 12px); }
+    }
+
+    main { padding: 42px clamp(28px, 5vw, 70px) 28px; max-width: 1260px; }
+    section.story-section { min-height: 92vh; display: grid; align-content: center; padding: 34px 0; }
+
+    .hero { position: relative; display: grid; grid-template-columns: 1fr 300px; gap: 30px; align-items: end; margin-bottom: 24px; }
+    h1 { margin: 0; font-size: clamp(44px, 6vw, 76px); line-height: 1.05; letter-spacing: -0.04em; color: var(--navy); }
+    .lead { margin: 22px 0 0; max-width: 760px; font-size: 20px; line-height: 1.65; color: #111; }
+
+    .hero-visual { height: 210px; position: relative; }
+    .pump { position: absolute; right: 120px; bottom: 0; width: 88px; height: 150px; border-radius: 12px 12px 4px 4px; background: var(--navy); box-shadow: var(--shadow); }
+    .pump::before { content: ""; position: absolute; left: 18px; top: 22px; width: 52px; height: 32px; border-radius: 4px; background: #e9e3d7; }
+    .drop { position: absolute; left: 36px; top: 75px; width: 22px; height: 30px; background: #f7a33b; border-radius: 50% 50% 50% 0; transform: rotate(-45deg) translate(2px,-2px); }
+    .arrow { position: absolute; right: 0; bottom: 72px; width: 180px; height: 120px; }
+    .arrow svg { width: 100%; height: 100%; overflow: visible; }
+
+    .card { background: rgba(255,255,255,.86); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 26px; }
+    .card-title { margin: 0 0 18px; text-align: center; color: #111; font-size: 16px; font-weight: 700; }
+    .note { margin-top: 14px; color: var(--muted); font-size: 14px; }
+
+    .section-heading { margin: 0 0 10px; font-size: clamp(28px, 3.5vw, 42px); line-height: 1.15; color: var(--navy); }
+    .section-subtitle { margin: 0 0 22px; color: #111; font-size: 17px; }
+
+    .concerns-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .concern {
+      padding: 22px 12px;
+      text-align: center;
+      border-right: 1px solid var(--line);
+      height: 330px;
+      display: grid;
+      grid-template-rows: 82px 88px 86px 34px;
+      justify-items: center;
+      align-items: center;
+      transform: translateY(24px);
+      opacity: 0;
+      transition: .6s ease;
+    }
+
+    .story-section.active .concern,
+    .story-section.active .fade-in { transform: translateY(0); opacity: 1; }
+    .concern:nth-child(2), .fade-in:nth-child(2) { transition-delay: .08s; }
+    .concern:nth-child(3), .fade-in:nth-child(3) { transition-delay: .16s; }
+    .concern:nth-child(4), .fade-in:nth-child(4) { transition-delay: .24s; }
+    .concern:nth-child(5), .fade-in:nth-child(5) { transition-delay: .32s; }
+    .concern:nth-child(6), .fade-in:nth-child(6) { transition-delay: .4s; }
+    .concern:last-child { border-right: none; }
+    .concern h3 { margin: 0; font-size: 15px; line-height: 1.25; color: #111; align-self: start; display: flex; align-items: flex-start; justify-content: center; }
+    .icon { height: 88px; display: flex; align-items: center; justify-content: center; font-size: 48px; margin: 0; }
+    .percent { font-size: 40px; font-weight: 900; color: var(--orange); align-self: end; }
+    .caption { color: #111; font-size: 14px; align-self: start; }
+
+    .party-patterns { margin-top: 28px; padding: 26px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.86); box-shadow: var(--shadow); }
+    .party-patterns .card-title { margin: 0 0 20px; text-align: center; color: #111; font-size: 16px; font-weight: 700; font-family: Inter, Arial, Helvetica, sans-serif; text-transform: none; letter-spacing: 0; }
+    .party-pattern-body { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 18px; align-items: stretch; width: 100%; overflow: hidden; }
+    .party-legend { border-right: 1px solid var(--line); padding-right: 20px; display: grid; align-content: center; gap: 18px; color: #111; font-weight: 700; font-size: 15px; line-height: 1.3; }
+    .legend-row { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: center; }
+    .legend-dot { width: 22px; height: 22px; border-radius: 999px; border: 1px solid rgba(0,0,0,.25); }
+    .legend-dot.blue { background: var(--blue); }
+    .legend-dot.red { background: var(--red); }
+    .party-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; width: 100%; min-width: 0; }
+    .party-mini { padding: 12px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; min-width: 0; overflow: hidden; }
+    .party-mini h4 { min-height: 50px; margin: 0 0 12px; font-family: Inter, Arial, Helvetica, sans-serif; font-size: 12px; color: #111; line-height: 1.25; text-align: center; font-weight: 700; }
+    .party-bar-row { display: grid; grid-template-columns: minmax(0, 1fr) 38px; gap: 7px; align-items: center; margin: 10px 0; color: #111; font-weight: 700; font-size: 14px; }
+    .bar-track { height: 17px; border: 1px solid #ddd; background: #f7f7f7; border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; transform: scaleX(0); transform-origin: left; transition: transform .7s ease; }
+    .story-section.active .bar-fill { transform: scaleX(1); }
+    .blue-fill { background: var(--blue); }
+    .red-fill { background: var(--red); }
+    .gray-fill { background: #9ea7ad; }
+
+    .responsibility-layout { display: grid; grid-template-columns: 1fr 1fr 0.95fr; gap: 26px; align-items: stretch; }
+    .party-large { text-align: center; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 26px 18px; }
+    .party-large h3 { margin: 0 0 18px; font-size: 26px; line-height: 1.25; text-transform: uppercase; }
+    .party-large .big { font-size: 76px; font-weight: 900; }
+    .square-row { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; margin-top: 18px; }
+    .sq { aspect-ratio: 1; border: 2px solid #333; background: #fff; }
+    .sq.blue { background: var(--blue); }
+    .sq.red { background: var(--red); }
+    .sq.black { background: #111; }
+    .mini-confidence { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 18px; }
+    .mini-confidence .big { font-size: 46px; }
+
+    .responsibility-bars { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+
+
+    /* Civilian casualties: expanded full baseline content while preserving the large-card design */
+    .civilian-hero-cards { display:grid; grid-template-columns: repeat(3, 1fr); gap:26px; align-items:stretch; margin-top:26px; }
+    .party-large.civilian-card { min-height: 360px; display:flex; flex-direction:column; justify-content:space-between; }
+    .party-large.civilian-card h3 { min-height: 78px; display:flex; align-items:center; justify-content:center; }
+    .civilian-card p { color: var(--navy); font-size: 18px; line-height:1.25; margin: 0 auto 18px; max-width: 420px; }
+    .civilian-card .square-row { margin-top: 12px; }
+    .civilian-mini-stats { display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top: 18px; }
+    .civilian-mini { border:1px solid var(--line); border-radius:10px; padding:10px 8px; background:#fffdf8; color:#111; font-size:12px; line-height:1.2; }
+    .civilian-mini b { display:block; font-size:22px; line-height:1; margin-bottom:5px; color:var(--navy); }
+    .civilian-full-card { margin-top: 26px; padding: 24px 28px 26px; }
+    .civilian-full-title { margin:0 0 18px; text-align:center; color:#111; font-size:18px; line-height:1.25; font-weight:800; }
+    .civilian-matrix { display:grid; grid-template-columns: 1fr 1fr; gap:22px; }
+    .civilian-country { border:1px solid var(--line); border-radius:12px; background:#fff; padding:18px; }
+    .civilian-country h3 { margin:0 0 14px; color:var(--navy); font-size:24px; line-height:1.2; }
+    .civilian-row { display:grid; grid-template-columns: 118px minmax(0,1fr); gap:14px; align-items:center; margin:14px 0; color:#111; }
+    .civilian-label { font-weight:800; font-size:14px; line-height:1.2; }
+    .civilian-stack { display:grid; height:44px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#f7f7f7; }
+    .civilian-stack.us-total { grid-template-columns:45fr 41fr 13fr; }
+    .civilian-stack.us-rep { grid-template-columns:23fr 65fr 12fr; }
+    .civilian-stack.us-dem { grid-template-columns:68fr 19fr 12fr; }
+    .civilian-stack.iran-total { grid-template-columns:69fr 11fr 19fr; }
+    .civilian-stack.iran-rep { grid-template-columns:76fr 9fr 15fr; }
+    .civilian-stack.iran-dem { grid-template-columns:65fr 14fr 21fr; }
+    .civilian-cell { display:flex; align-items:center; justify-content:center; text-align:center; color:#fff; font-weight:900; font-size:14px; min-width:0; transform:scaleX(0); transform-origin:left; transition:transform .8s ease; }
+    .story-section.active .civilian-cell { transform:scaleX(1); }
+    .civilian-cell:nth-child(2) { transition-delay:.12s; }
+    .civilian-cell:nth-child(3) { transition-delay:.24s; }
+    .civilian-cell.notdoing { background:#8b6f9c; }
+    .civilian-cell.doing { background:#6f8c72; }
+    .civilian-cell.notsure { background:#d6d6d6; color:#222; }
+    .civilian-cell.iran-notdoing { background:#111; }
+    .civilian-legend {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:30px;
+      flex-wrap:wrap;
+      color:#111;
+      font-size:14px;
+      font-weight:700;
+      margin-top:18px;
+    }
+    .civilian-legend .legend-group {
+      display:flex;
+      align-items:center;
+      white-space:nowrap;
+    }
+    .civilian-legend span::before {
+      content:"";
+      display:inline-block;
+      width:13px;
+      height:13px;
+      border-radius:3px;
+      margin-right:8px;
+      vertical-align:-2px;
+      border:1px solid rgba(0,0,0,.18);
+    }
+    .civilian-legend .legend-us::before { background:#8b6f9c; }
+    .civilian-legend .legend-iran::before { background:#111111; }
+    .civilian-legend .legend-doing::before { background:#6f8c72; }
+    .civilian-legend .legend-unsure::before { background:#d6d6d6; border:1px solid #aaa; }
+    @media (max-width:1100px){ .civilian-hero-cards, .civilian-matrix { grid-template-columns:1fr; } }
+    .stacked { display: grid; grid-template-columns: 41fr 45fr 13fr; height: 100px; border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+    .stacked.iran { grid-template-columns: 69fr 11fr 19fr; }
+    .seg { display: grid; place-items: center; text-align: center; font-weight: 800; color: #111; border-right: 1px solid #fff; transform: scaleX(0); transform-origin: left; transition: transform .85s ease; }
+    .story-section.active .seg { transform: scaleX(1); }
+    .seg:nth-child(2) { transition-delay: .16s; }
+    .seg:nth-child(3) { transition-delay: .32s; }
+    .enough {
+      background-color: #6f8c72;
+      color: #ffffff;
+    }
+    .not-enough {
+      background-color: #8b6f9c;
+      color: #ffffff;
+    }
+    .dark { background: var(--navy); color: #fff; }
+    .neutral {
+      background: #d6d6d6;
+      color: #222;
+    }
+    .seg strong { display: block; font-size: 30px; }
+    .seg span { display: block; font-size: 12px; margin-top: 5px; }
+
+    .future-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: stretch; }
+    .mini-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .future-box {
+      height: 270px;
+      display: grid;
+      grid-template-rows: 70px 58px 86px;
+      place-items: center;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 18px 12px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: .5s ease;
+    }
+    .story-section.active .future-box { opacity: 1; transform: translateY(0); }
+    .future-box:nth-child(2) { transition-delay: .1s; }
+    .future-box:nth-child(3) { transition-delay: .2s; }
+    .future-box:nth-child(4) { transition-delay: .3s; }
+    .future-box .percent { font-size: 36px; align-self: end; }
+    .future-box .symbol { height: 86px; display: flex; align-items: center; justify-content: center; font-size: 56px; opacity: .88; color: var(--navy); }
+    .future-box p { margin: 0; font-size: 15px; color: #111; line-height: 1.2; min-height: 46px; display: flex; align-items: flex-start; justify-content: center; }
+
+    .age-section { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    .people-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: end; }
+    .person {
+      text-align: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: .5s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .story-section.active .person { opacity: 1; transform: translateY(0); }
+    .person .head {
+      border-radius: 50%;
+      margin: 0 auto;
+      border: 1px solid #333;
+    }
+    .person .body {
+      margin: -2px auto 0;
+      border: 1px solid #333;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: #111;
+    }
+    .person.red .head, .person.red .body { background: rgba(199,67,43,.7); }
+    .person.blue .head, .person.blue .body { background: rgba(31,95,174,.7); color: #fff; }
+    .person label { display: block; color: #111; margin-bottom: 6px; font-weight: 700; }
+    .line-small { position: relative; height: 220px; border-left: 1px solid var(--line); border-bottom: 1px solid #aaa; margin-top: 18px; }
+    .line-small svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .all-ages-grid { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .dot-row { display: grid; grid-template-columns: 82px 40px 1fr; gap: 8px; align-items: center; margin: 8px 0; color: #111; font-size: 13px; }
+    .dots { display: grid; grid-template-columns: repeat(14, 8px); gap: 4px; }
+    .tiny-dot { width: 8px; height: 8px; border-radius: 50%; background: #d8d3ca; }
+    .tiny-dot.red { background: var(--red); }
+    .tiny-dot.blue { background: var(--blue); }
+
+    .rule-title { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; margin: 28px 0 14px; color: var(--navy); font-family: Inter, Arial, Helvetica, sans-serif; font-size: 18px; line-height: 1.25; font-weight: 800; letter-spacing: 0; text-align: center; }
+    .rule-title::before, .rule-title::after { content: ""; height: 1px; background: var(--line); }
+    .dot-compare-card { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: rgba(255,255,255,.88); box-shadow: var(--shadow); }
+    .dot-panel { padding: 22px 28px; }
+    .dot-panel + .dot-panel { border-left: 1px solid var(--line); }
+    .dot-panel h3 { margin: 0 0 6px; color: var(--navy); font-size: 21px; line-height: 1.25; }
+    .dot-sub { margin: 0 0 10px; color: #111; font-size: 13px; }
+    .dot-legend { display: flex; justify-content: center; gap: 22px; color: #111; font-size: 12px; margin: 8px 0 12px; }
+    .dot-legend span::before { content: ""; width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .dot-legend span:nth-child(1)::before { background: var(--red); }
+    .dot-legend span:nth-child(2)::before { background: var(--blue); }
+    .dot-legend span:nth-child(3)::before { background: var(--tan); }
+    .dot-legend span:nth-child(4)::before { background: var(--gray); }
+    .dot-line-row { display: grid; grid-template-columns: 80px 1fr; gap: 12px; align-items: center; margin: 12px 0; }
+    .axis-line { position: relative; height: 36px; border-bottom: 1px solid #bbb; }
+    .axis-dot { position: absolute; top: 13px; width: 12px; height: 12px; border-radius: 50%; transform: translateX(-50%); border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.18); }
+    .axis-label { position: absolute; top: -7px; transform: translateX(-50%); font-weight: 900; font-size: 13px; }
+    .gap-row { display: grid; grid-template-columns: 80px repeat(4,1fr); gap: 8px; margin-top: 12px; color: #111; font-size: 13px; }
+    .gap-row b { text-align: center; font-size: 15px; }
+    .age-detail-card { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: rgba(255,255,255,.86); box-shadow: var(--shadow); }
+    .age-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .age-party-panel { padding: 22px 30px 16px; }
+    .age-party-panel + .age-party-panel { border-left: 1px solid var(--line); }
+    .age-party-panel h3 { margin: 0 0 14px; text-align: center; font-family: Inter, Arial, Helvetica, sans-serif; font-size: 18px; line-height: 1.25; font-weight: 800; }
+    .people-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; align-items: end; margin: 16px 0 18px; }
+    .person-icon { text-align: center; opacity: 0; transform: translateY(20px); transition: .5s ease; }
+    .story-section.active .person-icon { opacity: 1; transform: translateY(0); }
+    .person-icon:nth-child(2) { transition-delay: .08s; }
+    .person-icon:nth-child(3) { transition-delay: .16s; }
+    .person-icon:nth-child(4) { transition-delay: .24s; }
+    .age-label2 { color: #111; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .p-head { border-radius: 50%; border: 1px solid #333; margin: 0 auto -2px; }
+    .p-body { border: 1px solid #333; margin: 0 auto; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #111; }
+    .red-person .p-head, .red-person .p-body { background: rgba(199,67,43,.72); }
+    .blue-person .p-head, .blue-person .p-body { background: rgba(31,95,174,.75); color: #fff; }
+    .tiny-line { height: 116px; position: relative; margin: 8px 4px 0; }
+    .tiny-line svg { width: 100%; height: 100%; overflow: visible; }
+    .line-caption { margin: 16px 0 6px; color: #111; font-size: 14px; line-height: 1.35; font-weight: 700; text-align: center; }
+    .bottom-party-summary { margin-top: 28px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.86); box-shadow: var(--shadow); padding: 22px 26px 24px; }
+    .summary-title { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center; color: var(--navy); font-family: Inter, Arial, Helvetica, sans-serif; font-size: 18px; line-height: 1.25; font-weight: 800; text-align: center; margin-bottom: 16px; }
+    .summary-title::before, .summary-title::after { content: ""; height: 1px; background: var(--line); }
+    .summary-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 46px; }
+    .summary-block h3 { margin: 0 0 12px; font-family: Inter, Arial, Helvetica, sans-serif; font-size: 18px; line-height: 1.25; font-weight: 800; }
+    .dot-row { display: grid; grid-template-columns: 110px 42px minmax(0,1fr); gap: 10px; align-items: center; margin: 8px 0; color: #111; font-size: 14px; line-height: 1.25; }
+    .dot-strip { display: grid; grid-template-columns: repeat(14, 8px); gap: 5px; }
+    .tiny-dot { width: 8px; height: 8px; border-radius: 50%; background: #d8d3ca; }
+    .tiny-dot.red { background: var(--red); }
+    .tiny-dot.blue { background: var(--blue); }
+    .tiny-dot.tan { background: var(--tan); }
+    .tiny-dot.gray { background: var(--gray); }
+
+    .confidence-grid { display: grid; grid-template-columns: 1.25fr .8fr; gap: 30px; align-items: start; }
+    .line-chart { position: relative; height: 300px; border-left: 1px solid var(--line); border-bottom: 1px solid #8c8c8c; background: repeating-linear-gradient(to top, transparent 0 59px, rgba(8,40,74,.08) 60px); margin: 22px 10px 0; }
+    .line-chart svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .chart-path { fill: none; stroke-width: 4; stroke-dasharray: 900; stroke-dashoffset: 900; transition: stroke-dashoffset 1.2s ease; }
+    .story-section.active .chart-path { stroke-dashoffset: 0; }
+    .circle { opacity: 0; transition: .35s ease; }
+    .story-section.active .circle { opacity: 1; }
+    .xlabels { display: flex; justify-content: space-between; margin: 10px 0 0 0; color: #111; font-size: 14px; }
+    .quote-card { transform: rotate(2deg); background: #fff7e8; margin-bottom: 22px; font-size: 22px; line-height: 1.5; }
+
+    .policy-grid {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 18px;
+      align-items: end;
+    }
+    .policy-item {
+      height: 285px;
+      display: grid;
+      grid-template-rows: 44px 125px 52px 64px;
+      align-items: end;
+      justify-items: center;
+      text-align: center;
+      color: #111;
+      font-size: 13px;
+      min-width: 0;
+    }
+    .policy-num { color: var(--blue); font-weight: 900; font-size: 26px; line-height: 1; align-self: end; }
+    .policy-bar-wrap { height: 125px; display: flex; align-items: flex-end; justify-content: center; }
+    .policy-bar {
+      height: calc(var(--v) * 2.2px);
+      width: 48px;
+      background: linear-gradient(#c7d4e5,#91a9c7);
+      border: 1px solid #333;
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform .7s ease;
+    }
+    .story-section.active .policy-bar { transform: scaleY(1); }
+    .flag { height: 52px; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+    .flag svg { width: 46px; height: 34px; display:block; overflow:visible; }
+    .flag .icon-stroke { fill:none; stroke:#174a78; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+    .flag .badge-text { font-family:Arial,Helvetica,sans-serif; font-size:11px; font-weight:900; fill:#08284a; text-anchor:middle; dominant-baseline:middle; }
+    .policy-label { min-height: 56px; display: flex; align-items: flex-start; justify-content: center; text-align: center; line-height: 1.15; }
+
+    .bottom-source { padding: 18px 0 0; color: var(--muted); font-size: 13px; }
+
+    /* Added detail blocks from the original Pew PDF */
+    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 26px; }
+    .detail-grid.two { grid-template-columns: repeat(2, 1fr); }
+    .detail-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 22px; box-shadow: 0 10px 30px rgba(8,40,74,.08); }
+    .detail-card h3 { margin: 0 0 12px; color: var(--navy); font-size: 18px; line-height: 1.25; }
+    .detail-card p { margin: 8px 0 0; color: #111; line-height: 1.45; }
+    .big-stat { font-size: 54px; line-height: 1; font-weight: 900; color: var(--orange); margin: 8px 0; }
+    .stat-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .stat-mini { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: #fffdf8; text-align: center; }
+    .stat-mini b { display:block; font-size: 30px; line-height: 1; color: var(--navy); margin-bottom: 6px; }
+    .stat-mini span { color:#111; font-size: 13px; line-height: 1.25; }
+    .intensity-bar { display: grid; height: 58px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); margin-top: 14px; }
+    .intensity-bar.five { grid-template-columns: 45fr 24fr 19fr 6fr 3fr; }
+    .intensity-seg { display: grid; place-items: center; font-weight: 800; color: #fff; font-size: 13px; line-height: 1.08; text-align:center; padding: 4px 3px; transform: scaleX(0); transform-origin: left; transition: transform .8s ease; min-width: 0; overflow: hidden; }
+    .intensity-seg.compact { font-size: 16px; line-height: 1; padding: 0; }
+    .story-section.active .intensity-seg { transform: scaleX(1); }
+    .intensity-seg:nth-child(2) { transition-delay:.1s; }
+    .intensity-seg:nth-child(3) { transition-delay:.2s; }
+    .intensity-seg:nth-child(4) { transition-delay:.3s; }
+    .intensity-seg:nth-child(5) { transition-delay:.4s; }
+    .tone-1 { background: var(--red); }
+    .tone-2 { background: var(--orange); }
+    .tone-3 { background: var(--gold); }
+    .tone-4 { background: #9ea7ad; color:#111; }
+    .tone-5 { background: #d6d6d6; color:#111; }
+    .legend-inline { display:flex; flex-wrap:wrap; gap:10px 16px; margin-top: 10px; color:#111; font-size: 13px; }
+    .legend-inline span::before { content:""; display:inline-block; width:10px; height:10px; border-radius:99px; margin-right:6px; background: var(--navy); }
+    .legend-inline span:nth-child(1)::before { background: var(--red); }
+    .legend-inline span:nth-child(2)::before { background: var(--orange); }
+    .legend-inline span:nth-child(3)::before { background: var(--gold); }
+    .legend-inline span:nth-child(4)::before { background: #9ea7ad; }
+    .legend-inline span:nth-child(5)::before { background: #d6d6d6; border:1px solid #aaa; }
+    .comparison-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:18px; margin-top: 18px; }
+    .comparison-card { border:1px solid var(--line); border-radius:12px; padding:18px; background:#fff; }
+    .comparison-card h4 { margin:0 0 12px; color:#111; font-size:16px; }
+    .comparison-row { display:grid; grid-template-columns: 120px minmax(0,1fr) 44px; gap:10px; align-items:center; margin:10px 0; color:#111; font-weight:700; }
+    .thin-track { height:18px; background:#f1f1f1; border:1px solid #ddd; border-radius:999px; overflow:hidden; }
+    .thin-fill { height:100%; border-radius:999px; transform:scaleX(0); transform-origin:left; transition:transform .8s ease; }
+    .story-section.active .thin-fill { transform:scaleX(1); }
+    .certainty { display:grid; grid-template-columns:17fr 24fr 21fr 24fr 13fr; height:76px; border-radius:8px; overflow:hidden; border:1px solid var(--line); margin-top: 14px; }
+    .certainty.iran-cert { grid-template-columns:2fr 9fr 30fr 39fr 19fr; }
+    .mini-line-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:18px; margin-top: 24px; }
+    .mini-line-card { border:1px solid var(--line); border-radius:12px; padding:18px; background:#fff; }
+    .mini-line-card h4 { margin:0 0 10px; color:#111; }
+    .trend { height:90px; position:relative; border-left:1px solid var(--line); border-bottom:1px solid #aaa; margin: 12px 8px 4px; }
+    .trend svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+    .trend-labels { display:flex; justify-content:space-between; color:#111; font-size:12px; margin: 8px 0 0; }
+    .text-callout { margin-top: 22px; padding: 20px 22px; border-left: 6px solid var(--orange); background:#fff7e8; color:#111; font-size:18px; line-height:1.45; }
+
+    .trend-legend { display:flex; justify-content:center; gap:22px; color:#111; font-size:14px; font-weight:800; margin: 6px 0 18px; }
+    .trend-legend span::before { content:""; display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:7px; vertical-align:-1px; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.2); }
+    .trend-legend span:nth-child(1)::before { background:var(--confident); }
+    .trend-legend span:nth-child(2)::before { background:var(--not-confident); }
+    .dual-trend { height:170px; position:relative; margin: 12px 4px 4px; }
+    .dual-trend svg { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+    .mini-line-card h4 { min-height: 0; display:block; margin:0 0 6px; font-size:19px; line-height:1.15; color:#111; }
+    .mini-trend-caption { display:flex; flex-wrap:wrap; gap:6px 14px; margin:0 0 8px; font-size:12px; line-height:1.25; font-weight:800; }
+    .mini-trend-caption .conf { color:var(--confident); }
+    .mini-trend-caption .no-conf { color:var(--not-confident); }
+    .axis-grid { stroke: rgba(8,40,74,.16); stroke-width:1; stroke-dasharray:3 5; }
+    .axis-base { stroke:#aaa; stroke-width:1; }
+    .axis-text { font-family: Arial, sans-serif; font-size:10px; font-weight:700; fill:#666; }
+    .trend-line-conf { fill:none; stroke:var(--confident); stroke-width:3.4; stroke-linecap:round; stroke-linejoin:round; }
+    .trend-line-no-conf { fill:none; stroke:var(--not-confident); stroke-width:3.4; stroke-linecap:round; stroke-linejoin:round; }
+    .trend-dot-conf { fill:#fff; stroke:var(--confident); stroke-width:3.2; }
+    .trend-dot-no-conf { fill:#fff; stroke:var(--not-confident); stroke-width:3.2; }
+    .trend-label-conf, .trend-label-no-conf { font-family: Arial, sans-serif; font-size:12px; font-weight:900; paint-order:stroke; stroke:#fff; stroke-width:4px; stroke-linejoin:round; }
+    .trend-label-conf { fill:var(--confident); }
+    .trend-label-no-conf { fill:var(--not-confident); }
+
+    @media (max-width: 1100px) { .detail-grid, .detail-grid.two, .comparison-grid, .mini-line-grid { grid-template-columns: 1fr; } .comparison-row { grid-template-columns: 98px 1fr 42px; } }
+
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { display: none; }
+      main { padding: 32px 18px; }
+      .hero, .future-grid, .confidence-grid, .responsibility-layout, .responsibility-bars, .age-section, .all-ages-grid, .age-detail-grid, .summary-columns { grid-template-columns: 1fr; }
+      .age-party-panel + .age-party-panel { border-left: none; border-top: 1px solid var(--line); }
+      .concerns-grid { grid-template-columns: repeat(2, 1fr); }
+      .party-pattern-body { grid-template-columns: 1fr; }
+      .party-legend { border-right: none; border-bottom: 1px solid var(--line); padding: 0 0 16px; grid-template-columns: 1fr 1fr; }
+      .party-grid, .policy-grid { grid-template-columns: repeat(2, 1fr); }
+      .concern { border-bottom: 1px solid var(--line); }
+    }
+  
+    .split-card { display:grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: stretch; }
+    .stat-row { display:grid; grid-template-columns: 150px 1fr 54px; gap: 12px; align-items:center; margin: 10px 0; color:#111; font-weight:700; }
+    .section-kicker { margin:0 0 8px; color:var(--orange); font-weight:900; letter-spacing:.06em; text-transform:uppercase; font-size:13px; }
+    .body-copy { color:#111; font-size:17px; line-height:1.55; margin: 0 0 16px; }
+    .compact-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:18px; margin-top: 24px; }
+    .full-width { grid-column: 1 / -1; }
+    .confidence-summary { display:grid; grid-template-columns: repeat(3,1fr); gap:16px; margin-top:22px; }
+    .summary-stat { border:1px solid var(--line); background:#fff; border-radius:12px; padding:20px; text-align:center; }
+    .summary-stat b { display:block; font-size:46px; line-height:1; margin-bottom:8px; }
+    .summary-stat span { color:#111; font-size:14px; line-height:1.25; }
+    .policy-party-card { padding: 30px 34px 26px; }
+    .party-dot-head { display:grid; grid-template-columns: 240px minmax(0,1fr); gap:28px; align-items:end; margin: 4px 0 14px; }
+    .party-dot-title { margin:0; text-align:left; color:#111; font-size:18px; font-weight:800; line-height:1.25; }
+    .legend-center { display:flex; justify-content:flex-end; gap:24px; color:#111; font-size:14px; font-weight:800; margin-bottom:4px; }
+    .legend-center span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:7px;vertical-align:middle;}
+    .legend-center span:nth-child(1)::before{background:var(--blue);} .legend-center span:nth-child(2)::before{background:var(--gray);} .legend-center span:nth-child(3)::before{background:var(--red);}
+    .axis-scale { grid-column: 2; position:relative; height:28px; margin-bottom:6px; color:#555; font-size:12px; font-weight:700; }
+    .axis-scale::before { content:""; position:absolute; left:0; right:0; top:11px; border-top:1px solid #b9b9b9; }
+    .axis-scale span { position:absolute; top:0; transform:translateX(-50%); background:#fff; padding:0 5px; }
+    .party-dot-chart { display:grid; gap:0; margin-top: 4px; }
+    .policy-dot-row { display:grid; grid-template-columns: 240px minmax(0,1fr); gap:28px; align-items:center; color:#111; font-size:15px; min-height:46px; border-top:1px solid rgba(8,40,74,.10); }
+    .policy-dot-row:first-child { border-top:0; }
+    .policy-dot-row > span:first-child { font-weight:700; line-height:1.18; }
+    .policy-axis { position:relative; height:38px; background:linear-gradient(to right, transparent 0 49.8%, rgba(8,40,74,.12) 50%, transparent 50.2%); }
+    .policy-axis::before { content:""; position:absolute; left:0; right:0; top:19px; border-top:1px dotted #aaa; }
+    .range-line { position:absolute; top:18px; height:3px; background:rgba(8,40,74,.18); border-radius:99px; }
+    .policy-axis .axis-dot { top:12px; width:15px; height:15px; border:3px solid #fff; box-shadow:0 0 0 2px rgba(0,0,0,.18); }
+    .dot-value { position:absolute; top:-8px; transform:translateX(-50%); font-size:13px; font-weight:900; background:#fff; padding:0 4px; }
+    .dot-value.dem { color:var(--blue); }
+    .dot-value.total { color:#666; }
+    .dot-value.rep { color:var(--red); }
+    .party-dot-note { margin:14px 0 0; color:var(--muted); font-size:13px; line-height:1.35; }
+    @media (max-width:1100px){ .split-card, .compact-grid, .confidence-summary {grid-template-columns:1fr;} .stat-row{grid-template-columns:110px 1fr 44px;} .party-dot-head, .policy-dot-row {grid-template-columns:1fr; gap:8px;} .axis-scale{grid-column:1;} }
+
+
+    /* Projected outcomes: full baseline table for nuclear weapon outcome */
+    .nuclear-outcome-card { margin-top: 28px; padding: 26px 30px 28px; }
+    .nuclear-outcome-title { margin:0 0 8px; text-align:center; color:#111; font-size:21px; line-height:1.25; font-weight:900; }
+    .nuclear-outcome-sub { margin:0 0 18px; text-align:center; color:#111; font-size:14px; line-height:1.35; }
+    .nuclear-outcome-grid { display:grid; grid-template-columns: 1fr 1fr; gap:24px; align-items:start; }
+    .nuclear-outcome-panel { border:1px solid var(--line); border-radius:12px; background:#fff; padding:20px 20px 18px; }
+    .nuclear-outcome-panel h3 { margin:0 0 14px; font-size:20px; line-height:1.25; text-align:center; font-weight:900; }
+    .nuclear-stack { display:grid; height:38px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#f7f7f7; }
+    .more-seg { background:#c7432b; }
+    .about-seg { background:#c98318; }
+    .less-seg { background:#6f8c72; }
+    .nuclear-stack.total { grid-template-columns:27fr 29fr 27fr 16fr; }
+    .nuclear-stack.rep-total { grid-template-columns:17fr 23fr 47fr 13fr; }
+    .nuclear-stack.rep-18 { grid-template-columns:24fr 35fr 25fr 16fr; }
+    .nuclear-stack.rep-30 { grid-template-columns:21fr 26fr 38fr 15fr; }
+    .nuclear-stack.rep-50 { grid-template-columns:13fr 18fr 58fr 11fr; }
+    .nuclear-stack.rep-65 { grid-template-columns:8fr 16fr 67fr 9fr; }
+    .nuclear-stack.dem-total { grid-template-columns:38fr 35fr 10fr 17fr; }
+    .nuclear-stack.dem-18 { grid-template-columns:45fr 30fr 7fr 17fr; }
+    .nuclear-stack.dem-30 { grid-template-columns:43fr 31fr 10fr 16fr; }
+    .nuclear-stack.dem-50 { grid-template-columns:35fr 37fr 11fr 17fr; }
+    .nuclear-stack.dem-65 { grid-template-columns:25fr 42fr 12fr 19fr; }
+    .nuclear-legend { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; color:#111; font-size:13px; font-weight:700; margin-top:18px; }
+    .nuclear-legend span::before{ content:""; display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:6px; vertical-align:-1px; background:#c7432b; }
+    .nuclear-legend span:nth-child(2)::before{ background:#c98318; }
+    .nuclear-legend span:nth-child(3)::before{ background:#6f8c72; }
+    .nuclear-legend span:nth-child(4)::before{ background:#d6d6d6; border:1px solid #aaa; }
+    @media (max-width:1100px){ .nuclear-outcome-grid { grid-template-columns:1fr; } }
+
+    /* Projected outcomes: full baseline table for Iranian people outcome */
+    .people-outcome-card { margin-top: 28px; padding: 26px 30px 28px; }
+    .people-outcome-title { margin:0 0 8px; text-align:center; color:#111; font-size:21px; line-height:1.25; font-weight:900; }
+    .people-outcome-sub { margin:0 0 18px; text-align:center; color:#111; font-size:14px; line-height:1.35; }
+    .people-outcome-grid { display:grid; grid-template-columns: 1fr 1fr; gap:24px; align-items:start; }
+    .people-outcome-panel { border:1px solid var(--line); border-radius:12px; background:#fff; padding:20px 20px 18px; }
+    .people-outcome-panel h3 { margin:0 0 14px; font-size:20px; line-height:1.25; text-align:center; font-weight:900; }
+    .people-row-full { display:grid; grid-template-columns: 104px minmax(0,1fr); gap:12px; align-items:center; margin:12px 0; color:#111; }
+    .people-row-full.group-row { margin-top:18px; padding-top:14px; border-top:1px solid rgba(8,40,74,.12); }
+    .people-label-full { font-weight:900; font-size:14px; line-height:1.15; }
+    .people-stack { display:grid; height:38px; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:#f7f7f7; }
+    .people-seg { display:flex; align-items:center; justify-content:center; min-width:0; color:#fff; font-size:13px; font-weight:900; transform:scaleX(0); transform-origin:left; transition:transform .8s ease; }
+    .story-section.active .people-seg { transform:scaleX(1); }
+    .people-seg:nth-child(2){ transition-delay:.1s; }
+    .people-seg:nth-child(3){ transition-delay:.2s; }
+    .people-seg:nth-child(4){ transition-delay:.3s; }
+    .better-seg { background:#6f8c72; }
+    .same-seg { background:#c98318; }
+    .worse-seg { background:#c7432b; }
+    .unsure-seg { background:#d6d6d6; color:#222; }
+    .people-stack.total { grid-template-columns:25fr 16fr 36fr 21fr; }
+    .people-stack.rep-total { grid-template-columns:47fr 16fr 17fr 19fr; }
+    .people-stack.rep-18 { grid-template-columns:33fr 18fr 28fr 20fr; }
+    .people-stack.rep-30 { grid-template-columns:37fr 19fr 22fr 22fr; }
+    .people-stack.rep-50 { grid-template-columns:54fr 15fr 12fr 18fr; }
+    .people-stack.rep-65 { grid-template-columns:63fr 12fr 7fr 15fr; }
+    .people-stack.dem-total { grid-template-columns:5fr 17fr 56fr 20fr; }
+    .people-stack.dem-18 { grid-template-columns:5fr 16fr 60fr 19fr; }
+    .people-stack.dem-30 { grid-template-columns:5fr 15fr 58fr 21fr; }
+    .people-stack.dem-50 { grid-template-columns:7fr 18fr 57fr 17fr; }
+    .people-stack.dem-65 { grid-template-columns:6fr 19fr 48fr 23fr; }
+    .people-legend { display:flex; justify-content:center; gap:20px; flex-wrap:wrap; color:#111; font-size:13px; font-weight:700; margin-top:18px; }
+    .people-legend span::before{ content:""; display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:6px; vertical-align:-1px; background:#6f8c72; }
+    .people-legend span:nth-child(2)::before{ background:#c98318; }
+    .people-legend span:nth-child(3)::before{ background:#c7432b; }
+    .people-legend span:nth-child(4)::before{ background:#d6d6d6; border:1px solid #aaa; }
+    .people-outcome-note { margin: 14px 0 0; color:var(--muted); font-size:13px; text-align:center; }
+    @media (max-width:1100px){ .people-outcome-grid { grid-template-columns:1fr; } .people-row-full { grid-template-columns:86px 1fr; } }
+
+
+    /* Outcomes animation: trigger each block independently and reset when it leaves view. */
+    #outcomes .card,
+    #outcomes .age-detail-card,
+    #outcomes .comparison-card {
+      scroll-margin-top: 90px;
+    }
+
+    /* Override the section-level active state inside the long Outcomes section.
+       This lets each sub-card replay its animation every time it re-enters view. */
+    #outcomes.story-section.active .future-box,
+    #outcomes.story-section.active .person-icon {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    #outcomes.story-section.active .thin-fill,
+    #outcomes.story-section.active .people-seg {
+      transform: scaleX(0);
+    }
+    #outcomes.story-section.active .chart-path {
+      stroke-dashoffset: 900;
+    }
+    #outcomes.story-section.active .circle {
+      opacity: 0;
+    }
+
+    #outcomes .card.in-view .future-box,
+    #outcomes .age-detail-card.in-view .person-icon {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #outcomes .card.in-view .thin-fill,
+    #outcomes .comparison-card.in-view .thin-fill { transform: scaleX(1); }
+    #outcomes .card.in-view .people-seg { transform: scaleX(1); }
+    #outcomes .card.in-view .chart-path,
+    #outcomes .age-detail-card.in-view .chart-path { stroke-dashoffset: 0; }
+    #outcomes .card.in-view .circle,
+    #outcomes .age-detail-card.in-view .circle { opacity: 1; }
+    #outcomes .people-row-full:nth-child(2) .people-seg { transition-delay:.04s; }
+    #outcomes .people-row-full:nth-child(3) .people-seg { transition-delay:.08s; }
+    #outcomes .people-row-full:nth-child(4) .people-seg { transition-delay:.12s; }
+    #outcomes .people-row-full:nth-child(5) .people-seg { transition-delay:.16s; }
+    #outcomes .people-row-full:nth-child(6) .people-seg { transition-delay:.20s; }
+
+
+
+    /* Outcomes section — party-based restrained palette */
+    #outcomes {
+      --rep-deep: #A93123;
+      --rep-main: #C7432B;
+      --rep-mid: #D86A32;
+      --rep-soft: #E8A08D;
+      --dem-deep: #16477F;
+      --dem-main: #1F5FAE;
+      --dem-mid: #4C82C3;
+      --dem-soft: #AFC7E8;
+      --outcome-red: #C7432B;
+      --outcome-blue: #1F5FAE;
+      --outcome-black: #222222;
+      --outcome-gray: #9A9A9A;
+      --outcome-light: #EFEFEF;
+      --outcome-white: #FFFFFF;
+    }
+
+    /* Keep the overview cards in the same red / blue / gray vocabulary */
+    #outcomes .future-box .symbol { color: var(--outcome-black); opacity: .78; }
+
+    /* Global full-breakdown colors: red/blue/gray/white, no green/yellow */
+    #outcomes .more-seg { background: var(--outcome-red); color:#fff; }
+    #outcomes .less-seg { background: var(--outcome-blue); color:#fff; }
+    #outcomes .about-seg,
+    #outcomes .same-seg { background: var(--outcome-light); color:#222; }
+    #outcomes .better-seg { background: var(--outcome-blue); color:#fff; }
+    #outcomes .worse-seg { background: var(--outcome-red); color:#fff; }
+    #outcomes .unsure-seg { background: var(--outcome-white); color:#222; box-shadow: inset 0 0 0 1px #bdbdbd; }
+
+    /* Republican panels: different reds + gray/white/black */
+    #outcomes .rep-panel .more-seg,
+    #outcomes .rep-panel .worse-seg { background: var(--rep-deep); color:#fff; }
+    #outcomes .rep-panel .less-seg,
+    #outcomes .rep-panel .better-seg { background: var(--rep-main); color:#fff; }
+    #outcomes .rep-panel .about-seg,
+    #outcomes .rep-panel .same-seg { background: #ECE7E3; color:#222; }
+    #outcomes .rep-panel .unsure-seg { background: #fff; color:#222; box-shadow: inset 0 0 0 1px #bdbdbd; }
+
+    /* Democrat panels: different blues + gray/white/black */
+    #outcomes .dem-panel .more-seg,
+    #outcomes .dem-panel .worse-seg { background: var(--dem-main); color:#fff; }
+    #outcomes .dem-panel .less-seg,
+    #outcomes .dem-panel .better-seg { background: var(--dem-mid); color:#fff; }
+    #outcomes .dem-panel .about-seg,
+    #outcomes .dem-panel .same-seg { background: #ECEFF3; color:#222; }
+    #outcomes .dem-panel .unsure-seg { background: #fff; color:#222; box-shadow: inset 0 0 0 1px #bdbdbd; }
+
+    /* Total rows use both party colors plus neutral gray/white */
+    #outcomes .nuclear-outcome-card > .people-row-full .more-seg,
+    #outcomes .people-outcome-card > .people-row-full .worse-seg { background: var(--outcome-red); color:#fff; }
+    #outcomes .nuclear-outcome-card > .people-row-full .less-seg,
+    #outcomes .people-outcome-card > .people-row-full .better-seg { background: var(--outcome-blue); color:#fff; }
+    #outcomes .nuclear-outcome-card > .people-row-full .about-seg,
+    #outcomes .people-outcome-card > .people-row-full .same-seg { background: #E9E9E9; color:#222; }
+
+    /* Legends match the new palette */
+    #outcomes .nuclear-legend span:nth-child(1)::before { background: var(--outcome-red); }
+    #outcomes .nuclear-legend span:nth-child(2)::before { background: #E9E9E9; border:1px solid #bdbdbd; }
+    #outcomes .nuclear-legend span:nth-child(3)::before { background: var(--outcome-blue); }
+    #outcomes .nuclear-legend span:nth-child(4)::before { background: #fff; border:1px solid #aaa; }
+    #outcomes .people-legend span:nth-child(1)::before { background: var(--outcome-blue); }
+    #outcomes .people-legend span:nth-child(2)::before { background: #E9E9E9; border:1px solid #bdbdbd; }
+    #outcomes .people-legend span:nth-child(3)::before { background: var(--outcome-red); }
+    #outcomes .people-legend span:nth-child(4)::before { background: #fff; border:1px solid #aaa; }
+
+
+
+    /* Corrected outcome legends: category markers no longer imply one fixed party color.
+       Red shades are used inside Republican panels; blue shades inside Democratic panels.
+       The split swatches communicate that the exact hue follows the party panel. */
+    #outcomes .party-aware-legend { gap: 24px; }
+    #outcomes .party-aware-legend span::before {
+      content:"";
+      display:inline-block;
+      width:15px;
+      height:15px;
+      border-radius:3px;
+      margin-right:8px;
+      vertical-align:-2px;
+      border:1px solid rgba(0,0,0,.28);
+      box-shadow:none;
+    }
+    #outcomes .party-aware-legend .key-more::before,
+    #outcomes .party-aware-legend .key-less::before,
+    #outcomes .party-aware-legend .key-better::before,
+    #outcomes .party-aware-legend .key-worse::before {
+      background: linear-gradient(90deg, var(--rep-main) 0 50%, var(--dem-main) 50% 100%);
+    }
+    #outcomes .party-aware-legend .key-about::before {
+      background:#CFCFCF;
+      border:1px solid #AFAFAF;
+    }
+    #outcomes .party-aware-legend .key-unsure::before {
+      background:#FFFFFF;
+      border:2px solid #AFAFAF;
+    }
+
+    /* Neutral bars match the legend more clearly. */
+    #outcomes .about-seg,
+    #outcomes .same-seg,
+    #outcomes .rep-panel .about-seg,
+    #outcomes .rep-panel .same-seg,
+    #outcomes .dem-panel .about-seg,
+    #outcomes .dem-panel .same-seg,
+    #outcomes .nuclear-outcome-card > .people-row-full .about-seg,
+    #outcomes .people-outcome-card > .people-row-full .same-seg {
+      background:#CFCFCF;
+      color:#222;
+    }
+
+    /* Extracted age-person figures stay party colored but softer */
+    #outcomes .red-person .p-head { background: var(--rep-mid); }
+    #outcomes .red-person .p-body { background: var(--rep-soft); color:#111; }
+    #outcomes .blue-person .p-head { background: var(--dem-mid); }
+    #outcomes .blue-person .p-body { background: var(--dem-soft); color:#fff; }
+
+    /* The small trend lines remain party-coded */
+    #outcomes .age-party-panel svg path[stroke="#c92318"],
+    #outcomes .age-party-panel svg circle[stroke="#c92318"] { stroke: var(--rep-main); }
+    #outcomes .age-party-panel svg text[fill="#c92318"] { fill: var(--rep-main); }
+    #outcomes .age-party-panel svg path[stroke="#1f5fae"],
+    #outcomes .age-party-panel svg circle[stroke="#1f5fae"] { stroke: var(--dem-main); }
+    #outcomes .age-party-panel svg text[fill="#1f5fae"] { fill: var(--dem-main); }
+
+
+
+    /* Outcome total rows: use non-party colors so the top summary does not conflict with party red/blue. */
+    #outcomes {
+      --total-positive: #6f8c72;   /* muted green, matches earlier bars */
+      --total-negative: #8b6f9c;   /* muted purple, matches earlier bars */
+      --total-neutral: #D6D6D6;
+      --total-unsure: #FFFFFF;
+    }
+
+    #outcomes .total-summary-row .more-seg,
+    #outcomes .total-summary-row .worse-seg {
+      background: var(--total-negative) !important;
+      color: #fff;
+    }
+    #outcomes .total-summary-row .less-seg,
+    #outcomes .total-summary-row .better-seg {
+      background: var(--total-positive) !important;
+      color: #fff;
+    }
+    #outcomes .total-summary-row .about-seg,
+    #outcomes .total-summary-row .same-seg {
+      background: var(--total-neutral) !important;
+      color: #222;
+    }
+    #outcomes .total-summary-row .unsure-seg {
+      background: var(--total-unsure) !important;
+      color: #222;
+      box-shadow: inset 0 0 0 1px #b6b6b6;
+    }
+
+    .total-outcome-legend {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:22px;
+      flex-wrap:wrap;
+      margin: 12px 0 20px;
+      color:#111;
+      font-size:13px;
+      font-weight:800;
+    }
+    .total-outcome-legend span::before {
+      content:"";
+      display:inline-block;
+      width:13px;
+      height:13px;
+      border-radius:3px;
+      margin-right:7px;
+      vertical-align:-2px;
+      border:1px solid rgba(0,0,0,.25);
+    }
+    .total-outcome-legend .total-negative-key::before { background: var(--total-negative); }
+    .total-outcome-legend .total-positive-key::before { background: var(--total-positive); }
+    .total-outcome-legend .total-neutral-key::before { background: var(--total-neutral); }
+    .total-outcome-legend .total-unsure-key::before { background: #fff; border:2px solid #aaa; }
+
+    .party-panel-legend {
+      display:grid;
+      grid-template-columns: repeat(2, minmax(280px, 1fr));
+      gap:18px;
+      margin: 20px auto 6px;
+      color:#111;
+      max-width: 980px;
+    }
+    .party-legend-block {
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:rgba(255,255,255,.78);
+      padding:14px 16px 12px;
+    }
+    .party-legend-block h4 {
+      margin:0 0 10px;
+      font-size:14px;
+      line-height:1.2;
+      font-weight:900;
+      text-align:center;
+    }
+    .party-legend-items {
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:9px 14px;
+      font-size:13px;
+      font-weight:800;
+      line-height:1.2;
+    }
+    .party-legend-items span::before {
+      content:"";
+      display:inline-block;
+      width:13px;
+      height:13px;
+      border-radius:3px;
+      margin-right:7px;
+      vertical-align:-2px;
+      border:1px solid rgba(0,0,0,.24);
+    }
+    .rep-legend h4 { color: var(--red); }
+    .dem-legend h4 { color: var(--blue); }
+    .party-legend-items .rep-deep-key::before { background: var(--rep-deep); }
+    .party-legend-items .rep-main-key::before { background: var(--rep-main); }
+    .party-legend-items .dem-main-key::before { background: var(--dem-main); }
+    .party-legend-items .dem-mid-key::before { background: var(--dem-mid); }
+    .party-legend-items .neutral-key::before { background:#CFCFCF; border:1px solid #AFAFAF; }
+    .party-legend-items .unsure-key::before { background:#fff; border:2px solid #aaa; }
+    @media (max-width: 1100px) { .party-panel-legend { grid-template-columns: 1fr; } }
+
+    /* Hide the older category legend at the bottom of the full outcome cards. */
+    #outcomes .nuclear-legend.party-aware-legend,
+    #outcomes .people-legend.party-aware-legend { display:none; }
+
+  
+
+    /* Reviewer-requested corrections */
+    .summary-stat .summary-detail {
+      display:block;
+      margin-top:9px;
+      color:#555;
+      font-size:12px;
+      line-height:1.35;
+      font-weight:600;
+    }
+    .section1-confidence-distribution {
+      margin-top:22px;
+      padding:20px 22px 22px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fffdf8;
+    }
+    .confidence-net-row {
+      display:grid;
+      grid-template-columns:35fr 64fr;
+      margin:0 0 7px;
+      font-size:13px;
+      color:#111;
+    }
+    .confidence-net-row span:first-child { text-align:center; color:var(--confident); }
+    .confidence-net-row span:last-child { text-align:center; color:var(--not-confident); }
+    .iran-confidence-stack, .latest-confidence-stack {
+      display:grid;
+      grid-template-columns:16fr 19fr 21fr 42fr;
+      min-height:76px;
+      border:1px solid var(--line);
+      border-radius:8px;
+      overflow:hidden;
+      background:#f7f7f7;
+    }
+    .confidence-cell {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:8px 4px;
+      color:#fff;
+      border-right:1px solid rgba(255,255,255,.7);
+      min-width:0;
+    }
+    .confidence-cell:last-child { border-right:0; }
+    .confidence-cell strong { font-size:23px; line-height:1; }
+    .confidence-cell span { margin-top:5px; font-size:11px; line-height:1.15; font-weight:800; }
+    .confident-strong { background:#58745f; }
+    .confident-light { background:#7f9b83; }
+    .no-confidence-light { background:#a187af; }
+    .no-confidence-strong { background:#795f89; }
+    .timeline-labels {
+      position:relative;
+      display:block;
+      height:24px;
+      margin-top:10px;
+      color:#111;
+      font-size:14px;
+    }
+    .timeline-labels span { position:absolute; transform:translateX(-50%); white-space:nowrap; }
+    .timeline-labels span:nth-child(1) { left:10%; }
+    .timeline-labels span:nth-child(2) { left:47.86%; }
+    .timeline-labels span:nth-child(3) { left:85.71%; }
+    .chart-question {
+      margin:-8px auto 16px;
+      max-width:720px;
+      text-align:center;
+      color:#333;
+      font-size:14px;
+      line-height:1.4;
+      font-style:italic;
+    }
+    #foreign-policy .mini-line-grid {
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      align-items:stretch;
+    }
+    #foreign-policy .mini-line-card {
+      display:grid;
+      grid-template-rows:34px 42px 170px 24px;
+      align-items:start;
+      min-width:0;
+      overflow:hidden;
+    }
+    #foreign-policy .mini-line-card h4 {
+      min-height:34px;
+      margin:0;
+      display:flex;
+      align-items:flex-start;
+    }
+    #foreign-policy .mini-trend-caption {
+      min-height:42px;
+      margin:0;
+      align-content:start;
+    }
+    #foreign-policy .dual-trend { width:100%; height:170px; margin:0; }
+    #foreign-policy .trend-labels {
+      position:relative;
+      display:block;
+      height:24px;
+      margin:0;
+      color:#111;
+      font-size:12px;
+    }
+    #foreign-policy .trend-labels span { position:absolute; transform:translateX(-50%); white-space:nowrap; }
+    #foreign-policy .trend-labels.points-3 span:nth-child(1) { left:18%; }
+    #foreign-policy .trend-labels.points-3 span:nth-child(2) { left:52%; }
+    #foreign-policy .trend-labels.points-3 span:nth-child(3) { left:86%; }
+    #foreign-policy .trend-labels.points-2 span:nth-child(1) { left:23%; }
+    #foreign-policy .trend-labels.points-2 span:nth-child(2) { left:80%; }
+    @media (max-width:1100px) {
+      #foreign-policy .mini-line-grid { grid-template-columns:1fr; }
+      .iran-confidence-stack, .latest-confidence-stack { min-height:92px; }
+    }
+
+    /* Top comparison card: keep both charts aligned at the same vertical starting point. */
+    #top .split-card > div {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    #top .split-card .card-title {
+      min-height: 22px;
+    }
+    #top .split-card .body-copy {
+      min-height: 132px;
+      margin-bottom: 16px;
+    }
+    #top .split-card .stacked,
+    #top .split-card .intensity-bar {
+      margin-top: 0;
+      flex: 0 0 auto;
+    }
+    @media (max-width: 1100px) {
+      #top .split-card .card-title,
+      #top .split-card .body-copy {
+        min-height: 0;
+      }
+    }
+
+    /* Keep the two projected-outcome charts aligned at the top. */
+    #outcomes .future-grid > .card {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      align-content: start;
+    }
+    #outcomes .future-grid .card-title {
+      min-height: 52px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    #outcomes .future-grid .chart-question {
+      min-height: 58px;
+      margin-top: -8px;
+      margin-bottom: 16px;
+    }
+    #outcomes .future-grid .chart-question-placeholder {
+      visibility: hidden;
+    }
+    #outcomes .future-grid .mini-grid {
+      align-self: start;
+    }
+
+
+    /* First section: concerns overview followed by a standalone importance callout */
+    .top-concerns-overview {
+      margin-top: 26px;
+    }
+    .top-concerns-overview > .card {
+      padding: 26px;
+    }
+    .importance-card {
+      margin-top: 26px;
+      padding: 30px 38px 32px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,.9);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .importance-stat {
+      color: var(--green);
+      font-size: clamp(64px, 8vw, 96px);
+      line-height: .95;
+      font-weight: 900;
+      letter-spacing: -.04em;
+      margin-bottom: 18px;
+    }
+    .importance-copy {
+      max-width: 760px;
+      margin: 0 auto;
+      color: #111;
+      font-size: clamp(22px, 2.4vw, 31px);
+      line-height: 1.25;
+      font-weight: 700;
+    }
+    .importance-detail {
+      max-width: 860px;
+      margin: 18px auto 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: #555;
+      font-size: 17px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+    @media (max-width: 1100px) {
+      .importance-card { padding: 26px 20px 28px; }
+      .importance-detail { font-size: 15px; }
+    }
+
+    /* Section 1 takeaway: scrollytelling-style summary card */
+    .seven-in-ten-callout {
+      position: relative;
+      width: 100%;
+      max-width: none;
+      margin: 26px 0;
+      padding: 30px 34px 28px;
+      text-align: center;
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .seven-in-ten-callout::before {
+      content: "KEY TAKEAWAY";
+      display: inline-block;
+      margin-bottom: 12px;
+      color: var(--orange);
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: .12em;
+    }
+    .seven-in-ten-stat {
+      margin: 0;
+      color: var(--red);
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      font-size: clamp(50px, 6vw, 76px);
+      line-height: .95;
+      font-weight: 900;
+      letter-spacing: -.045em;
+    }
+    .seven-in-ten-copy {
+      max-width: 720px;
+      margin: 12px auto 0;
+      color: #111;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      font-size: clamp(18px, 2vw, 25px);
+      line-height: 1.3;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    @media (max-width: 1100px) {
+      .seven-in-ten-callout {
+        margin: 24px 0;
+        padding: 26px 20px 24px;
+      }
+    }
+
+</style>
+</head>
+<body>
+<div class="topbar">
+<div>Scrollytelling Demo</div>
+<div class="meta">PEW RESEARCH CENTER  |  March 23–29, 2026  |  3,507 U.S. adults</div>
+</div>
+<div class="layout">
+<aside>
+<div class="rail">
+<a class="nav-item active" data-target="top" href="#top"><div class="dot">1</div><div class="nav-copy"><h3>Top Concern</h3><p>Gas prices are Americans’ leading concern.</p></div></a>
+<a class="nav-item" data-target="iran-confidence" href="#iran-confidence"><div class="dot">2</div><div class="nav-copy"><h3>Trump &amp; Iran</h3><p>Confidence in decisions about Iran.</p></div></a>
+<a class="nav-item" data-target="concerns" href="#concerns"><div class="dot">3</div><div class="nav-copy"><h3>Concerns</h3><p>What Americans worry may happen.</p></div></a>
+<a class="nav-item" data-target="civilian" href="#civilian"><div class="dot">4</div><div class="nav-copy"><h3>Civilian Casualties</h3><p>Are both sides doing enough?</p></div></a>
+<a class="nav-item" data-target="outcomes" href="#outcomes"><div class="dot">5</div><div class="nav-copy"><h3>Projected Outcomes</h3><p>Nuclear weapons and Iranian people.</p></div></a>
+<a class="nav-item" data-target="foreign-policy" href="#foreign-policy"><div class="dot">6</div><div class="nav-copy"><h3>Foreign Policy</h3><p>Confidence across 12 issues.</p></div></a>
+<div class="scroll-note"><div class="mouse"></div><span>Scroll to explore</span></div>
+</div>
+</aside>
+<main>
+<section class="story-section active" id="top">
+<div class="hero">
+<div>
+<p class="section-kicker">For release April 7, 2026</p>
+<h1>Gas Prices Are Americans’ Top Concern in Iran War</h1>
+<p class="lead">Nearly six weeks into the U.S. military campaign against Iran, a new Pew Research Center survey finds that higher gas prices are the outcome that concerns Americans the most. But majorities also worry about the United States sending ground troops into Iran, large numbers of military casualties, terrorist attacks on U.S. soil, and the war expanding outside the Middle East.</p>
+</div>
+<div aria-hidden="true" class="hero-visual">
+<div class="pump"><div class="drop"></div></div>
+<div class="arrow"><svg viewbox="0 0 180 120" xmlns="http://www.w3.org/2000/svg"><path d="M10 105 L55 62 L85 86 L125 18 L150 48 L161 32" fill="none" stroke="#d45b32" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"></path><path d="M154 24 L178 20 L168 42 Z" fill="#d45b32" transform="rotate(8 166 30)"></path></svg></div>
+</div>
+</div>
+<div class="card">
+<div class="split-card">
+<div>
+<p class="card-title">How Americans view key aspects of the Iran war</p>
+<p class="body-copy">Americans are closely divided on whether the U.S. is doing enough to prevent civilian casualties in the Iran war: 41% say it’s doing enough, while 45% say the opposite; 13% are not sure.</p>
+<div class="stacked"><div class="seg enough"><div><strong>41%</strong><span>Doing enough</span></div></div><div class="seg not-enough"><div><strong>45%</strong><span>Not doing enough</span></div></div><div class="seg neutral"><div><strong>13%</strong><span>Not sure</span></div></div></div>
+</div>
+<div>
+<p class="card-title">Concern about higher gas and fuel prices</p>
+<p class="body-copy">% who say, thinking about the U.S. military action against Iran, they are
+__
+concerned about higher gas and fuel prices</p>
+<div class="intensity-bar" style="grid-template-columns:45fr 24fr 19fr 9fr;">
+<div class="intensity-seg tone-1">45%<br/>Extremely</div>
+<div class="intensity-seg tone-2">24%<br/>Very</div>
+<div class="intensity-seg tone-3">19%<br/>Somewhat</div>
+<div class="intensity-seg tone-4">9%<br/>Not too /<br/>Not at all</div>
+</div>
+<div class="legend-inline"><span>Extremely</span><span>Very</span><span>Somewhat</span><span>Not too / Not at all</span></div>
+</div>
+</div>
+<div class="section1-confidence-distribution">
+<p class="card-title">% who say they are __ confident that Donald Trump can make good decisions when it comes to U.S. policy toward Iran</p>
+<div class="confidence-net-row"><span><b>NET Confidence: 35%</b></span><span><b>NET No confidence: 64%</b></span></div>
+<div class="iran-confidence-stack">
+<div class="confidence-cell confident-strong"><strong>16%</strong><span>Very</span></div>
+<div class="confidence-cell confident-light"><strong>19%</strong><span>Somewhat</span></div>
+<div class="confidence-cell no-confidence-light"><strong>21%</strong><span>Not too</span></div>
+<div class="confidence-cell no-confidence-strong"><strong>42%</strong><span>Not at all</span></div>
+</div>
+</div>
+<div class="seven-in-ten-callout" aria-label="Seven in ten Americans are extremely or very concerned about higher gas and fuel prices">
+<div class="seven-in-ten-stat">7 in 10</div>
+<div class="seven-in-ten-copy">Americans are extremely or very concerned about<br/>higher gas and fuel prices</div>
+</div>
+<div class="top-concerns-overview">
+<div class="card">
+<p class="card-title">% who are extremely/very concerned about each possible outcome of the U.S. military action against Iran</p>
+<div class="concerns-grid">
+<div class="concern"><h3>Higher gas and fuel prices</h3><div class="icon">⛽</div><div class="percent" style="color:var(--red)">69%</div><div class="caption"></div></div>
+<div class="concern"><h3>U.S. sending ground troops into Iran</h3><div class="icon">🪖</div><div class="percent">61%</div><div class="caption"></div></div>
+<div class="concern"><h3>Large numbers of U.S. military casualties</h3><div class="icon">🏷️</div><div class="percent" style="color:var(--gold)">59%</div><div class="caption"></div></div>
+<div class="concern"><h3>Terrorist attacks in the U.S.</h3><div class="icon">💥</div><div class="percent" style="color:var(--gold)">56%</div><div class="caption"></div></div>
+<div class="concern"><h3>The war expanding outside the Middle East</h3><div class="icon">🌍</div><div class="percent" style="color:var(--green)">53%</div><div class="caption"></div></div>
+<div class="concern"><h3>A shortage of weapons for the U.S. military</h3><div class="icon">⚠️</div><div class="percent" style="color:var(--green)">31%</div><div class="caption"></div></div>
+</div>
+</div>
+</div>
+
+<div class="importance-card">
+<div class="importance-stat">77%</div>
+<div class="importance-copy">say the U.S. military action against Iran is personally important to them</div>
+<div class="importance-detail">48% say it is very important; 81% of Rep/Lean Rep and 76% of Dem/Lean Dem say it is important.</div>
+</div>
+<p class="note">Note: Those who did not answer are not shown.</p>
+</div>
+</section>
+<section class="story-section" id="iran-confidence">
+<h2 class="section-heading">Do Americans think Trump can make good decisions about Iran?</h2>
+<p class="section-subtitle">Confidence in Trump’s ability to make good decisions about U.S. policy toward Iran has declined among both Republicans and Democrats.</p>
+<div class="confidence-grid">
+<div class="card"><p class="card-title">% who are very/somewhat confident that Donald Trump can make good decisions when it comes to U.S. policy toward Iran, by party</p><div class="line-chart"><svg preserveaspectratio="none" viewbox="0 0 700 300"><path class="chart-path" d="M70 38 L335 62 L600 98" stroke="#c7432b"></path><path class="chart-path" d="M70 148 L335 158 L600 190" stroke="#888"></path><path class="chart-path" d="M70 254 L335 248 L600 272" stroke="#1f5fae"></path><g fill="#fff" stroke-width="4"><circle class="circle" cx="70" cy="38" r="7" stroke="#c7432b"></circle><circle class="circle" cx="335" cy="62" r="7" stroke="#c7432b"></circle><circle class="circle" cx="600" cy="98" r="7" stroke="#c7432b"></circle><circle class="circle" cx="70" cy="148" r="7" stroke="#888"></circle><circle class="circle" cx="335" cy="158" r="7" stroke="#888"></circle><circle class="circle" cx="600" cy="190" r="7" stroke="#888"></circle><circle class="circle" cx="70" cy="254" r="7" stroke="#1f5fae"></circle><circle class="circle" cx="335" cy="248" r="7" stroke="#1f5fae"></circle><circle class="circle" cx="600" cy="272" r="7" stroke="#1f5fae"></circle></g><g font-family="Arial" font-size="18" font-weight="800"><text fill="#c7432b" x="55" y="24">84%</text><text fill="#c7432b" x="320" y="48">78%</text><text fill="#c7432b" x="585" y="84">66%</text><text fill="#777" x="55" y="132">47%</text><text fill="#777" x="320" y="142">44%</text><text fill="#777" x="585" y="174">35%</text><text fill="#1f5fae" x="55" y="238">13%</text><text fill="#1f5fae" x="320" y="232">14%</text><text fill="#1f5fae" x="590" y="257">7%</text></g></svg></div><div class="xlabels timeline-labels"><span>Jul '24</span><span>Aug '25</span><span>Mar '26</span></div></div>
+<div class="card">
+<p class="card-title">Latest survey response distribution</p>
+<p class="body-copy">In March 2026, 35% of Americans are very or somewhat confident in Trump’s policymaking toward Iran, while 64% are not too or not at all confident.</p>
+<div class="latest-confidence-stack"><div class="confidence-cell confident-strong"><strong>16%</strong><span>Very confident</span></div><div class="confidence-cell confident-light"><strong>19%</strong><span>Somewhat confident</span></div><div class="confidence-cell no-confidence-light"><strong>21%</strong><span>Not too confident</span></div><div class="confidence-cell no-confidence-strong"><strong>42%</strong><span>Not at all confident</span></div></div>
+<div class="stat-pair">
+<div class="stat-mini"><b style="color:var(--red)">66%</b><span>Rep/Lean Rep are confident</span></div>
+<div class="stat-mini"><b style="color:var(--blue)">7%</b><span>Dem/Lean Dem are confident</span></div>
+</div>
+</div>
+</div>
+<div class="detail-grid two">
+<div class="detail-card"><h3>Confidence is lower than before</h3><p>Confidence in Trump’s dealings with Iran is down 12 percentage points since 2024, and down 9 points since August 2025. Among Rep/Lean Rep, there has been an 18-point decline since 2024 and a 12-point drop since 2025. Confidence among Democrats has decreased from 14% in 2025 to 7% today.</p></div>
+<div class="detail-card"><h3>Age and gas-price concern matter among Republicans</h3><p>The youngest Republicans are divided: 46% are confident in Trump’s policymaking toward Iran, while 53% are not. Republicans ages 65 and older are overwhelmingly confident, at 80%.</p><div class="comparison-row"><span>Rep 18–29</span><div class="thin-track"><div class="thin-fill red-fill" style="width:46%"></div></div><b>46%</b></div><div class="comparison-row"><span>Rep 65+</span><div class="thin-track"><div class="thin-fill red-fill" style="width:80%"></div></div><b>80%</b></div><p class="note">Among Rep/Lean Rep extremely or very concerned about gas prices increasing, 56% have confidence; among those not concerned, 86% have confidence.</p></div>
+</div>
+</section>
+<section class="story-section" id="concerns">
+<h2 class="section-heading">What are Americans’ concerns about the Iran war?</h2>
+<p class="section-subtitle">About seven-in-ten Americans (69%) are concerned about higher gas and fuel prices as a result of
+the U.S. military action against Iran, including 45% who are extremely concerned. Of the potential
+outcomes we asked about, this one worries Americans most.
+<br/><br/>Majorities also are concerned about the U.S. sending ground troops into Iran, large numbers of
+military casualties, terrorist attacks in the U.S., and expansion of the war into countries outside
+the Middle East.
+<br/><br/>Fewer Americans (31%) are
+concerned about a shortage of
+weapons for the U.S. military.</p>
+<div class="card">
+<div class="party-patterns">
+<p class="card-title">Majorities in both parties are concerned the Iran war could lead to higher gas prices and terrorist attacks</p>
+<div class="party-pattern-body"><div class="party-legend"><div class="legend-row"><span class="legend-dot blue"></span><span>Democrats<br/>&amp; lean Dems</span></div><div class="legend-row"><span class="legend-dot red"></span><span>Republicans<br/>&amp; lean Reps</span></div></div><div class="party-grid">
+<div class="party-mini"><h4>Higher gas<br/>and fuel<br/>prices</h4><div class="party-bar-row"><div class="bar-track"><div class="bar-fill blue-fill" style="width:79%"></div></div><span>79%</span></div><div class="party-bar-row"><div class="bar-track"><div class="bar-fill red-fill" style="width:59%"></div></div><span>59%</span></div></div>
+<div class="party-mini"><h4>Sending ground<br/>troops<br/>into Iran</h4><div class="party-bar-row"><div class="bar-track"><div class="bar-fill blue-fill" style="width:76%"></div></div><span>76%</span></div><div class="party-bar-row"><div class="bar-track"><div class="bar-fill red-fill" style="width:48%"></div></div><span>48%</span></div></div>
+<div class="party-mini"><h4>War expanding<br/>outside the<br/>Middle East</h4><div class="party-bar-row"><div class="bar-track"><div class="bar-fill blue-fill" style="width:70%"></div></div><span>70%</span></div><div class="party-bar-row"><div class="bar-track"><div class="bar-fill red-fill" style="width:36%"></div></div><span>36%</span></div></div>
+<div class="party-mini"><h4>Large numbers of<br/>U.S. military<br/>casualties</h4><div class="party-bar-row"><div class="bar-track"><div class="bar-fill blue-fill" style="width:68%"></div></div><span>68%</span></div><div class="party-bar-row"><div class="bar-track"><div class="bar-fill red-fill" style="width:51%"></div></div><span>51%</span></div></div>
+<div class="party-mini"><h4>Terrorist attacks<br/>in the U.S.</h4><div class="party-bar-row"><div class="bar-track"><div class="bar-fill blue-fill" style="width:60%"></div></div><span>60%</span></div><div class="party-bar-row"><div class="bar-track"><div class="bar-fill red-fill" style="width:54%"></div></div><span>54%</span></div></div>
+<div class="party-mini"><h4>A shortage of<br/>weapons for<br/>the U.S. military</h4><div class="party-bar-row"><div class="bar-track"><div class="bar-fill blue-fill" style="width:34%"></div></div><span>34%</span></div><div class="party-bar-row"><div class="bar-track"><div class="bar-fill red-fill" style="width:30%"></div></div><span>30%</span></div></div>
+</div></div>
+</div>
+<div class="text-callout">Another Pew Research Center survey conducted in March found that 68% of Democrats think the war will continue for six months or longer, while 58% of Republicans expect the war to end within the next six months.</div>
+</div>
+</section>
+<section class="story-section" id="civilian">
+<h2 class="section-heading">Are both sides doing enough to avoid civilian casualties?</h2>
+<p class="section-subtitle">Majorities of Americans in both parties say Iran is not doing enough to avoid civilian casualties. But the public is more divided on the U.S.</p>
+<div class="responsibility-bars">
+<div class="card"><h3>The U.S.</h3><div class="stacked"><div class="seg not-enough"><div><strong>45%</strong><span>Not doing enough</span></div></div><div class="seg enough"><div><strong>41%</strong><span>Doing enough</span></div></div><div class="seg neutral"><div><strong>13%</strong><span>Not sure</span></div></div></div></div>
+<div class="card"><h3>Iran</h3><div class="stacked iran"><div class="seg dark"><div><strong>69%</strong><span>Not doing enough</span></div></div><div class="seg enough"><div><strong>11%</strong><span>Doing enough</span></div></div><div class="seg neutral"><div><strong>19%</strong><span>Not sure</span></div></div></div></div>
+</div>
+<div class="civilian-hero-cards">
+<div class="party-large civilian-card">
+<h3 style="color:var(--blue)">Dem/Lean Dem</h3>
+<div class="big" style="color:var(--blue)">68%</div>
+<p>say the U.S. is <b>not doing enough</b> to avoid civilian casualties</p>
+<div class="square-row" data-count="7" data-fill="blue"></div>
+<div class="civilian-mini-stats"><div class="civilian-mini"><b>19%</b>say the U.S. is doing enough</div><div class="civilian-mini"><b>12%</b>are not sure</div></div>
+</div>
+<div class="party-large civilian-card">
+<h3 style="color:var(--red)">Rep/Lean Rep</h3>
+<div class="big" style="color:var(--red)">23%</div>
+<p>say the U.S. is <b>not doing enough</b> to avoid civilian casualties</p>
+<div class="square-row" data-count="2" data-fill="red"></div>
+<div class="civilian-mini-stats"><div class="civilian-mini"><b>65%</b>say the U.S. is doing enough</div><div class="civilian-mini"><b>12%</b>are not sure</div></div>
+</div>
+<div class="party-large civilian-card">
+<h3>What about Iran?</h3>
+<div class="big" style="color:#111">69%</div>
+<p>of all adults say Iran itself is <b>not doing enough</b> to avoid civilian casualties</p>
+<div class="square-row" data-count="7" data-fill="black"></div>
+<div class="civilian-mini-stats"><div class="civilian-mini"><b>76%</b>of Republicans say Iran is not doing enough</div><div class="civilian-mini"><b>65%</b>of Democrats say Iran is not doing enough</div></div>
+</div>
+</div>
+<div class="card civilian-full-card">
+<p class="civilian-full-title">Full baseline breakdown: % who say each country is not doing enough, doing enough, or not sure</p>
+<div class="civilian-matrix">
+<div class="civilian-country">
+<h3>The U.S.</h3>
+<div class="civilian-row"><div class="civilian-label">Total</div><div class="civilian-stack us-total"><div class="civilian-cell notdoing">45</div><div class="civilian-cell doing">41</div><div class="civilian-cell notsure">13</div></div></div>
+<div class="civilian-row"><div class="civilian-label">Rep/Lean Rep</div><div class="civilian-stack us-rep"><div class="civilian-cell notdoing">23</div><div class="civilian-cell doing">65</div><div class="civilian-cell notsure">12</div></div></div>
+<div class="civilian-row"><div class="civilian-label">Dem/Lean Dem</div><div class="civilian-stack us-dem"><div class="civilian-cell notdoing">68</div><div class="civilian-cell doing">19</div><div class="civilian-cell notsure">12</div></div></div>
+</div>
+<div class="civilian-country">
+<h3>Iran</h3>
+<div class="civilian-row"><div class="civilian-label">Total</div><div class="civilian-stack iran-total"><div class="civilian-cell iran-notdoing">69</div><div class="civilian-cell doing">11</div><div class="civilian-cell notsure">19</div></div></div>
+<div class="civilian-row"><div class="civilian-label">Rep/Lean Rep</div><div class="civilian-stack iran-rep"><div class="civilian-cell iran-notdoing">76</div><div class="civilian-cell doing">9</div><div class="civilian-cell notsure">15</div></div></div>
+<div class="civilian-row"><div class="civilian-label">Dem/Lean Dem</div><div class="civilian-stack iran-dem"><div class="civilian-cell iran-notdoing">65</div><div class="civilian-cell doing">14</div><div class="civilian-cell notsure">21</div></div></div>
+</div>
+</div>
+<div class="civilian-legend">
+<div class="legend-group"><span class="legend-us">U.S. — Not doing enough</span></div>
+<div class="legend-group"><span class="legend-doing">Doing enough</span></div>
+<div class="legend-group"><span class="legend-unsure">Not sure</span></div>
+<div class="legend-group"><span class="legend-iran">Iran — Not doing enough</span></div>
+</div>
+</div>
+<div class="detail-card" style="margin-top:26px"><h3>Younger Republicans are more likely than older Republicans to say that the U.S. is not doing enough</h3><div class="comparison-row"><span>Rep 18–29</span><div class="thin-track"><div class="thin-fill red-fill" style="width:35%"></div></div><b>35%</b></div><div class="comparison-row"><span>Rep 65+</span><div class="thin-track"><div class="thin-fill red-fill" style="width:13%"></div></div><b>13%</b></div><p class="note">Among Dem/Lean Dem, there are no significant age differences on this question.</p></div>
+</section>
+<section class="story-section" id="outcomes">
+<h2 class="section-heading">What are the projected outcomes of the war?</h2>
+<p class="section-subtitle">Americans are evenly divided on whether U.S. military action will hinder Iran’s ability to develop a nuclear weapon. But more predict the conflict will leave the Iranian people worse off, rather than better off, in the long run.</p>
+<div class="future-grid">
+<div class="card"><p class="card-title">Will military action stop Iran from developing a nuclear weapon?</p><p class="chart-question">% who say that in the long run, U.S. military action against Iran will make Iran’s development of a nuclear weapon ...</p><div class="mini-grid"><div class="future-box"><div class="percent" style="color:var(--outcome-red)">27%</div><p>More likely</p><div class="symbol">↗</div></div><div class="future-box"><div class="percent" style="color:var(--outcome-black)">29%</div><p>About as likely as before</p><div class="symbol">=</div></div><div class="future-box"><div class="percent" style="color:var(--outcome-blue)">27%</div><p>Less likely</p><div class="symbol">↓</div></div><div class="future-box"><div class="percent" style="color:var(--outcome-gray)">16%</div><p>Not sure</p><div class="symbol">?</div></div></div></div>
+<div class="card"><p class="card-title">In the long run, U.S. military action will make the Iranian people...</p><p class="chart-question chart-question-placeholder" aria-hidden="true">% who say that in the long run, U.S. military action against Iran will make Iran’s development of a nuclear weapon ...</p><div class="mini-grid"><div class="future-box"><div class="percent" style="color:var(--outcome-blue)">25%</div><p>Better off</p><div class="symbol">🌳</div></div><div class="future-box"><div class="percent" style="color:var(--outcome-black)">16%</div><p>About as well off as before</p><div class="symbol">=</div></div><div class="future-box"><div class="percent" style="color:var(--outcome-red)">36%</div><p>Worse off</p><div class="symbol">🏭</div></div><div class="future-box"><div class="percent" style="color:var(--outcome-gray)">21%</div><p>Not sure</p><div class="symbol">?</div></div></div></div>
+</div>
+<div class="comparison-grid">
+<div class="comparison-card"><h4>Party divide: Iran’s nuclear capability</h4><div class="comparison-row"><span>Rep: less likely</span><div class="thin-track"><div class="thin-fill red-fill" style="width:47%"></div></div><b>47%</b></div><div class="comparison-row"><span>Dem: less likely</span><div class="thin-track"><div class="thin-fill blue-fill" style="width:10%"></div></div><b>10%</b></div><div class="comparison-row"><span>Rep: more likely</span><div class="thin-track"><div class="thin-fill red-fill" style="width:17%"></div></div><b>17%</b></div><div class="comparison-row"><span>Dem: more likely</span><div class="thin-track"><div class="thin-fill blue-fill" style="width:38%"></div></div><b>38%</b></div></div>
+<div class="comparison-card"><h4>Party divide: Iranian people’s future</h4><div class="comparison-row"><span>Rep: better off</span><div class="thin-track"><div class="thin-fill red-fill" style="width:47%"></div></div><b>47%</b></div><div class="comparison-row"><span>Dem: better off</span><div class="thin-track"><div class="thin-fill blue-fill" style="width:5%"></div></div><b>5%</b></div><div class="comparison-row"><span>Rep: worse off</span><div class="thin-track"><div class="thin-fill red-fill" style="width:17%"></div></div><b>17%</b></div><div class="comparison-row"><span>Dem: worse off</span><div class="thin-track"><div class="thin-fill blue-fill" style="width:56%"></div></div><b>56%</b></div></div>
+</div>
+
+
+<div class="card nuclear-outcome-card">
+<p class="nuclear-outcome-title">Older and younger Republicans diverge on whether military action will make Iranian nuclear capability less likely</p>
+<p class="nuclear-outcome-sub">% who say that in the long run, U.S. military action against Iran will make Iran’s development of a nuclear weapon...</p>
+<div class="people-row-full group-row total-summary-row"><div class="people-label-full">Total</div><div class="nuclear-stack total"><div class="people-seg more-seg">27</div><div class="people-seg about-seg">29</div><div class="people-seg less-seg">27</div><div class="people-seg unsure-seg">16</div></div></div>
+<div class="total-outcome-legend nuclear-total-legend"><span class="total-negative-key">More likely</span><span class="total-neutral-key">About as likely as before</span><span class="total-positive-key">Less likely</span><span class="total-unsure-key">Not sure</span></div>
+<div class="nuclear-outcome-grid">
+<div class="nuclear-outcome-panel rep-panel">
+<h3 style="color:var(--red)">Rep/Lean Rep</h3>
+<div class="people-row-full group-row"><div class="people-label-full">Rep/Lean Rep</div><div class="nuclear-stack rep-total"><div class="people-seg more-seg">17</div><div class="people-seg about-seg">23</div><div class="people-seg less-seg">47</div><div class="people-seg unsure-seg">13</div></div></div>
+<div class="people-row-full"><div class="people-label-full">18–29</div><div class="nuclear-stack rep-18"><div class="people-seg more-seg">24</div><div class="people-seg about-seg">35</div><div class="people-seg less-seg">25</div><div class="people-seg unsure-seg">16</div></div></div>
+<div class="people-row-full"><div class="people-label-full">30–49</div><div class="nuclear-stack rep-30"><div class="people-seg more-seg">21</div><div class="people-seg about-seg">26</div><div class="people-seg less-seg">38</div><div class="people-seg unsure-seg">15</div></div></div>
+<div class="people-row-full"><div class="people-label-full">50–64</div><div class="nuclear-stack rep-50"><div class="people-seg more-seg">13</div><div class="people-seg about-seg">18</div><div class="people-seg less-seg">58</div><div class="people-seg unsure-seg">11</div></div></div>
+<div class="people-row-full"><div class="people-label-full">65+</div><div class="nuclear-stack rep-65"><div class="people-seg more-seg">8</div><div class="people-seg about-seg">16</div><div class="people-seg less-seg">67</div><div class="people-seg unsure-seg">9</div></div></div>
+</div>
+<div class="nuclear-outcome-panel dem-panel">
+<h3 style="color:var(--blue)">Dem/Lean Dem</h3>
+<div class="people-row-full group-row"><div class="people-label-full">Dem/Lean Dem</div><div class="nuclear-stack dem-total"><div class="people-seg more-seg">38</div><div class="people-seg about-seg">35</div><div class="people-seg less-seg">10</div><div class="people-seg unsure-seg">17</div></div></div>
+<div class="people-row-full"><div class="people-label-full">18–29</div><div class="nuclear-stack dem-18"><div class="people-seg more-seg">45</div><div class="people-seg about-seg">30</div><div class="people-seg less-seg">7</div><div class="people-seg unsure-seg">17</div></div></div>
+<div class="people-row-full"><div class="people-label-full">30–49</div><div class="nuclear-stack dem-30"><div class="people-seg more-seg">43</div><div class="people-seg about-seg">31</div><div class="people-seg less-seg">10</div><div class="people-seg unsure-seg">16</div></div></div>
+<div class="people-row-full"><div class="people-label-full">50–64</div><div class="nuclear-stack dem-50"><div class="people-seg more-seg">35</div><div class="people-seg about-seg">37</div><div class="people-seg less-seg">11</div><div class="people-seg unsure-seg">17</div></div></div>
+<div class="people-row-full"><div class="people-label-full">65+</div><div class="nuclear-stack dem-65"><div class="people-seg more-seg">25</div><div class="people-seg about-seg">42</div><div class="people-seg less-seg">12</div><div class="people-seg unsure-seg">19</div></div></div>
+</div>
+</div>
+<div class="party-panel-legend nuclear-party-legend">
+<div class="party-legend-block rep-legend"><h4>Republican panel</h4><div class="party-legend-items"><span class="rep-deep-key">More likely</span><span class="neutral-key">About as likely as before</span><span class="rep-main-key">Less likely</span><span class="unsure-key">Not sure</span></div></div>
+<div class="party-legend-block dem-legend"><h4>Democratic panel</h4><div class="party-legend-items"><span class="dem-main-key">More likely</span><span class="neutral-key">About as likely as before</span><span class="dem-mid-key">Less likely</span><span class="unsure-key">Not sure</span></div></div>
+</div>
+<div class="nuclear-legend party-aware-legend"><span class="key-more">More likely</span><span class="key-about">About as likely as before</span><span class="key-less">Less likely</span><span class="key-unsure">Not sure</span></div>
+<p class="people-outcome-note">Note: Those who did not answer are not shown.</p>
+</div>
+
+
+<div class="card people-outcome-card">
+<p class="people-outcome-title">More Americans predict the Iranian people will be worse off than better off due to U.S. military action</p>
+<p class="people-outcome-sub">% who say that in the long run, U.S. military action against Iran will make the Iranian people...</p>
+<div class="people-row-full group-row total-summary-row"><div class="people-label-full">Total</div><div class="people-stack total"><div class="people-seg better-seg">25</div><div class="people-seg same-seg">16</div><div class="people-seg worse-seg">36</div><div class="people-seg unsure-seg">21</div></div></div>
+<div class="total-outcome-legend people-total-legend"><span class="total-positive-key">Better off</span><span class="total-neutral-key">About as well off as before</span><span class="total-negative-key">Worse off</span><span class="total-unsure-key">Not sure</span></div>
+<div class="people-outcome-grid">
+<div class="people-outcome-panel rep-panel">
+<h3 style="color:var(--red)">Rep/Lean Rep</h3>
+<div class="people-row-full group-row"><div class="people-label-full">Rep/Lean Rep</div><div class="people-stack rep-total"><div class="people-seg better-seg">47</div><div class="people-seg same-seg">16</div><div class="people-seg worse-seg">17</div><div class="people-seg unsure-seg">19</div></div></div>
+<div class="people-row-full"><div class="people-label-full">18–29</div><div class="people-stack rep-18"><div class="people-seg better-seg">33</div><div class="people-seg same-seg">18</div><div class="people-seg worse-seg">28</div><div class="people-seg unsure-seg">20</div></div></div>
+<div class="people-row-full"><div class="people-label-full">30–49</div><div class="people-stack rep-30"><div class="people-seg better-seg">37</div><div class="people-seg same-seg">19</div><div class="people-seg worse-seg">22</div><div class="people-seg unsure-seg">22</div></div></div>
+<div class="people-row-full"><div class="people-label-full">50–64</div><div class="people-stack rep-50"><div class="people-seg better-seg">54</div><div class="people-seg same-seg">15</div><div class="people-seg worse-seg">12</div><div class="people-seg unsure-seg">18</div></div></div>
+<div class="people-row-full"><div class="people-label-full">65+</div><div class="people-stack rep-65"><div class="people-seg better-seg">63</div><div class="people-seg same-seg">12</div><div class="people-seg worse-seg">7</div><div class="people-seg unsure-seg">15</div></div></div>
+</div>
+<div class="people-outcome-panel dem-panel">
+<h3 style="color:var(--blue)">Dem/Lean Dem</h3>
+<div class="people-row-full group-row"><div class="people-label-full">Dem/Lean Dem</div><div class="people-stack dem-total"><div class="people-seg better-seg">5</div><div class="people-seg same-seg">17</div><div class="people-seg worse-seg">56</div><div class="people-seg unsure-seg">20</div></div></div>
+<div class="people-row-full"><div class="people-label-full">18–29</div><div class="people-stack dem-18"><div class="people-seg better-seg">5</div><div class="people-seg same-seg">16</div><div class="people-seg worse-seg">60</div><div class="people-seg unsure-seg">19</div></div></div>
+<div class="people-row-full"><div class="people-label-full">30–49</div><div class="people-stack dem-30"><div class="people-seg better-seg">5</div><div class="people-seg same-seg">15</div><div class="people-seg worse-seg">58</div><div class="people-seg unsure-seg">21</div></div></div>
+<div class="people-row-full"><div class="people-label-full">50–64</div><div class="people-stack dem-50"><div class="people-seg better-seg">7</div><div class="people-seg same-seg">18</div><div class="people-seg worse-seg">57</div><div class="people-seg unsure-seg">17</div></div></div>
+<div class="people-row-full"><div class="people-label-full">65+</div><div class="people-stack dem-65"><div class="people-seg better-seg">6</div><div class="people-seg same-seg">19</div><div class="people-seg worse-seg">48</div><div class="people-seg unsure-seg">23</div></div></div>
+</div>
+</div>
+<div class="party-panel-legend people-party-legend">
+<div class="party-legend-block rep-legend"><h4>Republican panel</h4><div class="party-legend-items"><span class="rep-main-key">Better off</span><span class="neutral-key">About as well off as before</span><span class="rep-deep-key">Worse off</span><span class="unsure-key">Not sure</span></div></div>
+<div class="party-legend-block dem-legend"><h4>Democratic panel</h4><div class="party-legend-items"><span class="dem-mid-key">Better off</span><span class="neutral-key">About as well off as before</span><span class="dem-main-key">Worse off</span><span class="unsure-key">Not sure</span></div></div>
+</div>
+<div class="people-legend party-aware-legend"><span class="key-better">Better off</span><span class="key-about">About as well off as before</span><span class="key-worse">Worse off</span><span class="key-unsure">Not sure</span></div>
+<p class="people-outcome-note">Note: Those who did not answer are not shown.</p>
+</div>
+</section>
+<section class="story-section" id="foreign-policy">
+<h2 class="section-heading">Do Americans think Trump can make good decisions about various foreign policy issues?</h2>
+<p class="section-subtitle">Majorities of Americans express little or no confidence in President Donald Trump’s handling of various foreign policy issues. There is no issue on which a majority express confidence.</p>
+<div class="card"><p class="card-title">% who are very/somewhat confident Trump can make good decisions on each foreign policy issue</p><div class="policy-grid">
+<div class="policy-item"><div class="policy-num">43%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:43"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Israel"><rect x="1" y="1" width="46" height="32" rx="3" fill="#fff" stroke="#b9c5cf"/><rect x="1" y="5" width="46" height="5" fill="#1f5fae"/><rect x="1" y="24" width="46" height="5" fill="#1f5fae"/><path d="M24 11.5l5.2 9H18.8zM24 22.5l-5.2-9h10.4z" fill="none" stroke="#1f5fae" stroke-width="1.5"/></svg></div><div class="policy-label">U.S.-Israel<br/>relations</div></div>
+<div class="policy-item"><div class="policy-num">42%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:42"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Canada"><rect x="1" y="1" width="46" height="32" rx="3" fill="#fff" stroke="#b9c5cf"/><rect x="1" y="1" width="10" height="32" rx="2" fill="#d52b1e"/><rect x="37" y="1" width="10" height="32" rx="2" fill="#d52b1e"/><path d="M24 9l2.1 4 3.4-1.1-1.4 4 2.7 1.1-4.1 2.2.6 4.5-3.3-2-3.3 2 .6-4.5-4.1-2.2 2.7-1.1-1.4-4 3.4 1.1z" fill="#d52b1e"/></svg></div><div class="policy-label">U.S.-Canada<br/>relations</div></div>
+<div class="policy-item"><div class="policy-num">41%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:41"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Global trade"><circle cx="24" cy="17" r="13" fill="#eaf3fb" stroke="#1f5fae" stroke-width="2"/><path d="M11 17h26M24 4c5 5 5 21 0 26M24 4c-5 5-5 21 0 26M14 10h20M14 24h20" class="icon-stroke" stroke-width="1.5"/></svg></div><div class="policy-label">U.S. trade<br/>policy</div></div>
+<div class="policy-item"><div class="policy-num">39%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:39"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Mexico"><rect x="1" y="1" width="46" height="32" rx="3" fill="#fff" stroke="#b9c5cf"/><rect x="1" y="1" width="15.3" height="32" rx="2" fill="#006847"/><rect x="31.7" y="1" width="15.3" height="32" rx="2" fill="#ce1126"/><circle cx="24" cy="17" r="3.2" fill="#9a7b38"/></svg></div><div class="policy-label">U.S.-Mexico<br/>relations</div></div>
+<div class="policy-item"><div class="policy-num">39%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:39"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Venezuela"><rect x="1" y="1" width="46" height="32" rx="3" fill="#f4d21f" stroke="#b9c5cf"/><rect x="1" y="11.7" width="46" height="10.6" fill="#1f4ea3"/><rect x="1" y="22.3" width="46" height="10.7" rx="2" fill="#cf2436"/><g fill="#fff"><circle cx="16" cy="17" r="1"/><circle cx="20" cy="14.8" r="1"/><circle cx="24" cy="14" r="1"/><circle cx="28" cy="14.8" r="1"/><circle cx="32" cy="17" r="1"/></g></svg></div><div class="policy-label">Venezuela</div></div>
+<div class="policy-item"><div class="policy-num">39%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:39"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="China"><rect x="1" y="1" width="46" height="32" rx="3" fill="#de2910" stroke="#b9c5cf"/><path d="M11 7l1.2 3.2 3.4.1-2.7 2.1.9 3.3-2.8-1.9-2.8 1.9.9-3.3-2.7-2.1 3.4-.1z" fill="#ffde00"/><g fill="#ffde00"><circle cx="18" cy="7" r="1"/><circle cx="20" cy="11" r="1"/><circle cx="19" cy="16" r="1"/><circle cx="15" cy="18" r="1"/></g></svg></div><div class="policy-label">China</div></div>
+<div class="policy-item"><div class="policy-num">39%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:39"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="North Korea"><rect x="1" y="1" width="46" height="32" rx="3" fill="#024fa2" stroke="#b9c5cf"/><rect x="1" y="7" width="46" height="20" fill="#fff"/><rect x="1" y="9" width="46" height="16" fill="#ed1c27"/><circle cx="15" cy="17" r="5" fill="#fff"/><path d="M15 12.7l1.1 2.7 2.9.2-2.2 1.9.7 2.9-2.5-1.6-2.5 1.6.7-2.9-2.2-1.9 2.9-.2z" fill="#ed1c27"/></svg></div><div class="policy-label">North<br/>Korea</div></div>
+<div class="policy-item"><div class="policy-num">37%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:37"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Cuba"><rect x="1" y="1" width="46" height="32" rx="3" fill="#fff" stroke="#b9c5cf"/><rect x="1" y="1" width="46" height="6.4" fill="#002a8f"/><rect x="1" y="13.8" width="46" height="6.4" fill="#002a8f"/><rect x="1" y="26.6" width="46" height="6.4" rx="2" fill="#002a8f"/><path d="M1 1v32l20-16z" fill="#cf142b"/><path d="M9 12.5l1.2 3.1 3.3.2-2.6 2 .8 3.2-2.7-1.8-2.7 1.8.8-3.2-2.6-2 3.3-.2z" fill="#fff"/></svg></div><div class="policy-label">Cuba</div></div>
+<div class="policy-item"><div class="policy-num">36%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:36"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Tariff policy"><rect x="5" y="8" width="38" height="18" rx="9" fill="#dce8f3"/><path d="M11 17h26M11 17l6-6M11 17l6 6M37 17l-6-6M37 17l-6 6" class="icon-stroke"/></svg></div><div class="policy-label">U.S. tariff<br/>policy</div></div>
+<div class="policy-item"><div class="policy-num">35%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:35"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Iran"><rect x="1" y="1" width="46" height="32" rx="3" fill="#fff" stroke="#b9c5cf"/><rect x="1" y="1" width="46" height="10.7" rx="2" fill="#239f40"/><rect x="1" y="22.3" width="46" height="10.7" rx="2" fill="#da0000"/><path d="M24 13v8M21 15c0 5 6 5 6 0M20 18h8" fill="none" stroke="#da0000" stroke-width="1.4"/></svg></div><div class="policy-label">Iran</div></div>
+<div class="policy-item"><div class="policy-num">35%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:35"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="NATO"><circle cx="24" cy="17" r="13" fill="#eaf3fb" stroke="#1f5fae" stroke-width="2"/><circle cx="24" cy="17" r="2" fill="#1f5fae"/><path d="M24 5l3.2 8.8L36 17l-8.8 3.2L24 29l-3.2-8.8L12 17l8.8-3.2z" fill="#fff" stroke="#1f5fae" stroke-width="1.4"/></svg></div><div class="policy-label">Working with<br/>NATO</div></div>
+<div class="policy-item"><div class="policy-num">32%</div><div class="policy-bar-wrap"><div class="policy-bar" style="--v:32"></div></div><div class="flag"><svg viewBox="0 0 48 34" role="img" aria-label="Ukraine Russia war"><path d="M13 7l21 21M35 7L14 28" class="icon-stroke" stroke-width="3"/><path d="M10 5l7 2-5 5zM38 5l-7 2 5 5z" fill="#174a78"/><path d="M10 26l6 6M38 26l-6 6" class="icon-stroke" stroke-width="3"/></svg></div><div class="policy-label">Ukraine-Russia<br/>war</div></div>
+</div></div>
+<div class="card policy-party-card" style="margin-top:28px">
+<div class="party-dot-head">
+<p class="party-dot-title">Confidence in Trump’s foreign policy decisions, by party</p>
+<div class="legend-center"><span>Dem/Lean Dem</span><span>Total</span><span>Rep/Lean Rep</span></div>
+<div class="axis-scale"><span style="left:0%">0</span><span style="left:50%">50</span><span style="left:100%">100</span></div>
+</div>
+<div class="policy-dot-chart">
+<div class="policy-dot-row"><span>U.S.-Israel relations</span><div class="policy-axis"><span class="range-line" style="left:16%;right:27%"></span><span class="dot-value dem" style="left:16%">16</span><span class="axis-dot" style="left:16%;background:var(--blue)"></span><span class="dot-value total" style="left:43%">43</span><span class="axis-dot" style="left:43%;background:var(--gray)"></span><span class="dot-value rep" style="left:73%">73</span><span class="axis-dot" style="left:73%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S.-Canada relations</span><div class="policy-axis"><span class="range-line" style="left:15%;right:29%"></span><span class="dot-value dem" style="left:15%">15</span><span class="axis-dot" style="left:15%;background:var(--blue)"></span><span class="dot-value total" style="left:42%">42</span><span class="axis-dot" style="left:42%;background:var(--gray)"></span><span class="dot-value rep" style="left:71%">71</span><span class="axis-dot" style="left:71%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S. trade policy</span><div class="policy-axis"><span class="range-line" style="left:12%;right:26%"></span><span class="dot-value dem" style="left:12%">12</span><span class="axis-dot" style="left:12%;background:var(--blue)"></span><span class="dot-value total" style="left:41%">41</span><span class="axis-dot" style="left:41%;background:var(--gray)"></span><span class="dot-value rep" style="left:74%">74</span><span class="axis-dot" style="left:74%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S.-Mexico relations</span><div class="policy-axis"><span class="range-line" style="left:11%;right:30%"></span><span class="dot-value dem" style="left:11%">11</span><span class="axis-dot" style="left:11%;background:var(--blue)"></span><span class="dot-value total" style="left:39%">39</span><span class="axis-dot" style="left:39%;background:var(--gray)"></span><span class="dot-value rep" style="left:70%">70</span><span class="axis-dot" style="left:70%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S. policy toward Venezuela</span><div class="policy-axis"><span class="range-line" style="left:9%;right:27%"></span><span class="dot-value dem" style="left:9%">9</span><span class="axis-dot" style="left:9%;background:var(--blue)"></span><span class="dot-value total" style="left:39%">39</span><span class="axis-dot" style="left:39%;background:var(--gray)"></span><span class="dot-value rep" style="left:73%">73</span><span class="axis-dot" style="left:73%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S. policy toward China</span><div class="policy-axis"><span class="range-line" style="left:11%;right:29%"></span><span class="dot-value dem" style="left:11%">11</span><span class="axis-dot" style="left:11%;background:var(--blue)"></span><span class="dot-value total" style="left:39%">39</span><span class="axis-dot" style="left:39%;background:var(--gray)"></span><span class="dot-value rep" style="left:71%">71</span><span class="axis-dot" style="left:71%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S. policy toward North Korea</span><div class="policy-axis"><span class="range-line" style="left:10%;right:29%"></span><span class="dot-value dem" style="left:10%">10</span><span class="axis-dot" style="left:10%;background:var(--blue)"></span><span class="dot-value total" style="left:39%">39</span><span class="axis-dot" style="left:39%;background:var(--gray)"></span><span class="dot-value rep" style="left:71%">71</span><span class="axis-dot" style="left:71%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S. policy toward Cuba</span><div class="policy-axis"><span class="range-line" style="left:10%;right:31%"></span><span class="dot-value dem" style="left:10%">10</span><span class="axis-dot" style="left:10%;background:var(--blue)"></span><span class="dot-value total" style="left:37%">37</span><span class="axis-dot" style="left:37%;background:var(--gray)"></span><span class="dot-value rep" style="left:69%">69</span><span class="axis-dot" style="left:69%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S. tariff policy</span><div class="policy-axis"><span class="range-line" style="left:9%;right:34%"></span><span class="dot-value dem" style="left:9%">9</span><span class="axis-dot" style="left:9%;background:var(--blue)"></span><span class="dot-value total" style="left:36%">36</span><span class="axis-dot" style="left:36%;background:var(--gray)"></span><span class="dot-value rep" style="left:66%">66</span><span class="axis-dot" style="left:66%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>U.S. policy toward Iran</span><div class="policy-axis"><span class="range-line" style="left:7%;right:34%"></span><span class="dot-value dem" style="left:7%">7</span><span class="axis-dot" style="left:7%;background:var(--blue)"></span><span class="dot-value total" style="left:35%">35</span><span class="axis-dot" style="left:35%;background:var(--gray)"></span><span class="dot-value rep" style="left:66%">66</span><span class="axis-dot" style="left:66%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>Working effectively with NATO</span><div class="policy-axis"><span class="range-line" style="left:11%;right:38%"></span><span class="dot-value dem" style="left:11%">11</span><span class="axis-dot" style="left:11%;background:var(--blue)"></span><span class="dot-value total" style="left:35%">35</span><span class="axis-dot" style="left:35%;background:var(--gray)"></span><span class="dot-value rep" style="left:62%">62</span><span class="axis-dot" style="left:62%;background:var(--red)"></span></div></div>
+<div class="policy-dot-row"><span>Ukraine-Russia war</span><div class="policy-axis"><span class="range-line" style="left:7%;right:40%"></span><span class="dot-value dem" style="left:7%">7</span><span class="axis-dot" style="left:7%;background:var(--blue)"></span><span class="dot-value total" style="left:32%">32</span><span class="axis-dot" style="left:32%;background:var(--gray)"></span><span class="dot-value rep" style="left:60%">60</span><span class="axis-dot" style="left:60%;background:var(--red)"></span></div></div>
+</div>
+<p class="party-dot-note">Values are the share who say they are very or somewhat confident. The connecting line highlights the party gap for each issue.</p>
+</div>
+<div class="card" style="margin-top:28px"><p class="card-title">Confidence in Trump’s ability to make good decisions on certain foreign policy issues is falling</p><div class="trend-legend"><span>Confident</span><span>Not confident</span></div><div class="mini-line-grid">
+<div class="mini-line-card"><h4>Iran</h4><p class="mini-trend-caption"><span class="conf">Confident 47 → 44 → 35</span><span class="no-conf">Not confident 50 → 56 → 64</span></p><div class="dual-trend"><svg preserveaspectratio="none" viewbox="0 0 300 170">
+<line class="axis-grid" x1="42" x2="274" y1="35" y2="35"></line><line class="axis-grid" x1="42" x2="274" y1="92.5" y2="92.5"></line><line class="axis-base" x1="42" x2="274" y1="150" y2="150"></line><line class="axis-base" x1="42" x2="42" y1="35" y2="150"></line>
+<text class="axis-text" x="8" y="38">100</text><text class="axis-text" x="16" y="96">50</text><text class="axis-text" x="23" y="153">0</text>
+<path class="chart-path trend-line-conf" d="M54 96.0 L155 99.4 L256 109.8"></path><path class="chart-path trend-line-no-conf" d="M54 92.5 L155 85.6 L256 76.4"></path>
+<g><circle class="circle trend-dot-conf" cx="54" cy="96.0" r="6"></circle><circle class="circle trend-dot-conf" cx="155" cy="99.4" r="6"></circle><circle class="circle trend-dot-conf" cx="256" cy="109.8" r="6"></circle></g><g><circle class="circle trend-dot-no-conf" cx="54" cy="92.5" r="6"></circle><circle class="circle trend-dot-no-conf" cx="155" cy="85.6" r="6"></circle><circle class="circle trend-dot-no-conf" cx="256" cy="76.4" r="6"></circle></g>
+<g><text class="trend-label-conf" text-anchor="middle" x="54" y="116.0">47</text><text class="trend-label-conf" text-anchor="middle" x="155" y="119.4">44</text><text class="trend-label-conf" text-anchor="middle" x="256" y="129.8">35</text><text class="trend-label-no-conf" text-anchor="middle" x="54" y="82.5">50</text><text class="trend-label-no-conf" text-anchor="middle" x="155" y="75.6">56</text><text class="trend-label-no-conf" text-anchor="middle" x="256" y="66.4">64</text></g>
+</svg></div><div class="trend-labels points-3"><span>2024</span><span>2025</span><span>2026</span></div></div>
+<div class="mini-line-card"><h4>Ukraine/Russia</h4><p class="mini-trend-caption"><span class="conf">Confident 45 → 40 → 32</span><span class="no-conf">Not confident 52 → 59 → 66</span></p><div class="dual-trend"><svg preserveaspectratio="none" viewbox="0 0 300 170">
+<line class="axis-grid" x1="42" x2="274" y1="35" y2="35"></line><line class="axis-grid" x1="42" x2="274" y1="92.5" y2="92.5"></line><line class="axis-base" x1="42" x2="274" y1="150" y2="150"></line><line class="axis-base" x1="42" x2="42" y1="35" y2="150"></line>
+<text class="axis-text" x="8" y="38">100</text><text class="axis-text" x="16" y="96">50</text><text class="axis-text" x="23" y="153">0</text>
+<path class="chart-path trend-line-conf" d="M54 98.2 L155 104.0 L256 113.2"></path><path class="chart-path trend-line-no-conf" d="M54 90.2 L155 82.2 L256 74.1"></path>
+<g><circle class="circle trend-dot-conf" cx="54" cy="98.2" r="6"></circle><circle class="circle trend-dot-conf" cx="155" cy="104.0" r="6"></circle><circle class="circle trend-dot-conf" cx="256" cy="113.2" r="6"></circle></g><g><circle class="circle trend-dot-no-conf" cx="54" cy="90.2" r="6"></circle><circle class="circle trend-dot-no-conf" cx="155" cy="82.2" r="6"></circle><circle class="circle trend-dot-no-conf" cx="256" cy="74.1" r="6"></circle></g>
+<g><text class="trend-label-conf" text-anchor="middle" x="54" y="118.2">45</text><text class="trend-label-conf" text-anchor="middle" x="155" y="124.0">40</text><text class="trend-label-conf" text-anchor="middle" x="256" y="133.2">32</text><text class="trend-label-no-conf" text-anchor="middle" x="54" y="80.2">52</text><text class="trend-label-no-conf" text-anchor="middle" x="155" y="72.2">59</text><text class="trend-label-no-conf" text-anchor="middle" x="256" y="64.1">66</text></g>
+</svg></div><div class="trend-labels points-3"><span>2024</span><span>2025</span><span>2026</span></div></div>
+<div class="mini-line-card"><h4>China</h4><p class="mini-trend-caption"><span class="conf">Confident 48 → 45 → 39</span><span class="no-conf">Not confident 49 → 55 → 60</span></p><div class="dual-trend"><svg preserveaspectratio="none" viewbox="0 0 300 170">
+<line class="axis-grid" x1="42" x2="274" y1="35" y2="35"></line><line class="axis-grid" x1="42" x2="274" y1="92.5" y2="92.5"></line><line class="axis-base" x1="42" x2="274" y1="150" y2="150"></line><line class="axis-base" x1="42" x2="42" y1="35" y2="150"></line>
+<text class="axis-text" x="8" y="38">100</text><text class="axis-text" x="16" y="96">50</text><text class="axis-text" x="23" y="153">0</text>
+<path class="chart-path trend-line-conf" d="M54 94.8 L155 98.2 L256 105.2"></path><path class="chart-path trend-line-no-conf" d="M54 93.7 L155 86.8 L256 81.0"></path>
+<g><circle class="circle trend-dot-conf" cx="54" cy="94.8" r="6"></circle><circle class="circle trend-dot-conf" cx="155" cy="98.2" r="6"></circle><circle class="circle trend-dot-conf" cx="256" cy="105.2" r="6"></circle></g><g><circle class="circle trend-dot-no-conf" cx="54" cy="93.7" r="6"></circle><circle class="circle trend-dot-no-conf" cx="155" cy="86.8" r="6"></circle><circle class="circle trend-dot-no-conf" cx="256" cy="81.0" r="6"></circle></g>
+<g><text class="trend-label-conf" text-anchor="middle" x="54" y="114.8">48</text><text class="trend-label-conf" text-anchor="middle" x="155" y="118.2">45</text><text class="trend-label-conf" text-anchor="middle" x="256" y="125.2">39</text><text class="trend-label-no-conf" text-anchor="middle" x="54" y="83.7">49</text><text class="trend-label-no-conf" text-anchor="middle" x="155" y="76.8">55</text><text class="trend-label-no-conf" text-anchor="middle" x="256" y="71.0">60</text></g>
+</svg></div><div class="trend-labels points-3"><span>2024</span><span>2025</span><span>2026</span></div></div>
+<div class="mini-line-card"><h4>North Korea</h4><p class="mini-trend-caption"><span class="conf">Confident 48 → 44 → 39</span><span class="no-conf">Not confident 49 → 55 → 60</span></p><div class="dual-trend"><svg preserveaspectratio="none" viewbox="0 0 300 170">
+<line class="axis-grid" x1="42" x2="274" y1="35" y2="35"></line><line class="axis-grid" x1="42" x2="274" y1="92.5" y2="92.5"></line><line class="axis-base" x1="42" x2="274" y1="150" y2="150"></line><line class="axis-base" x1="42" x2="42" y1="35" y2="150"></line>
+<text class="axis-text" x="8" y="38">100</text><text class="axis-text" x="16" y="96">50</text><text class="axis-text" x="23" y="153">0</text>
+<path class="chart-path trend-line-conf" d="M54 94.8 L155 99.4 L256 105.2"></path><path class="chart-path trend-line-no-conf" d="M54 93.7 L155 86.8 L256 81.0"></path>
+<g><circle class="circle trend-dot-conf" cx="54" cy="94.8" r="6"></circle><circle class="circle trend-dot-conf" cx="155" cy="99.4" r="6"></circle><circle class="circle trend-dot-conf" cx="256" cy="105.2" r="6"></circle></g><g><circle class="circle trend-dot-no-conf" cx="54" cy="93.7" r="6"></circle><circle class="circle trend-dot-no-conf" cx="155" cy="86.8" r="6"></circle><circle class="circle trend-dot-no-conf" cx="256" cy="81.0" r="6"></circle></g>
+<g><text class="trend-label-conf" text-anchor="middle" x="54" y="114.8">48</text><text class="trend-label-conf" text-anchor="middle" x="155" y="119.4">44</text><text class="trend-label-conf" text-anchor="middle" x="256" y="125.2">39</text><text class="trend-label-no-conf" text-anchor="middle" x="54" y="83.7">49</text><text class="trend-label-no-conf" text-anchor="middle" x="155" y="76.8">55</text><text class="trend-label-no-conf" text-anchor="middle" x="256" y="71.0">60</text></g>
+</svg></div><div class="trend-labels points-3"><span>2024</span><span>2025</span><span>2026</span></div></div>
+<div class="mini-line-card"><h4>Israel</h4><p class="mini-trend-caption"><span class="conf">Confident 46 → 43</span><span class="no-conf">Not confident 53 → 55</span></p><div class="dual-trend"><svg preserveaspectratio="none" viewbox="0 0 300 170">
+<line class="axis-grid" x1="42" x2="274" y1="35" y2="35"></line><line class="axis-grid" x1="42" x2="274" y1="92.5" y2="92.5"></line><line class="axis-base" x1="42" x2="274" y1="150" y2="150"></line><line class="axis-base" x1="42" x2="42" y1="35" y2="150"></line>
+<text class="axis-text" x="8" y="38">100</text><text class="axis-text" x="16" y="96">50</text><text class="axis-text" x="23" y="153">0</text>
+<path class="chart-path trend-line-conf" d="M70 97.1 L240 100.6"></path><path class="chart-path trend-line-no-conf" d="M70 89.1 L240 86.8"></path>
+<g><circle class="circle trend-dot-conf" cx="70" cy="97.1" r="6"></circle><circle class="circle trend-dot-conf" cx="240" cy="100.6" r="6"></circle></g><g><circle class="circle trend-dot-no-conf" cx="70" cy="89.1" r="6"></circle><circle class="circle trend-dot-no-conf" cx="240" cy="86.8" r="6"></circle></g>
+<g><text class="trend-label-conf" text-anchor="middle" x="70" y="117.1">46</text><text class="trend-label-conf" text-anchor="middle" x="240" y="120.6">43</text><text class="trend-label-no-conf" text-anchor="middle" x="70" y="79.1">53</text><text class="trend-label-no-conf" text-anchor="middle" x="240" y="76.8">55</text></g>
+</svg></div><div class="trend-labels points-2"><span>2025</span><span>2026</span></div></div>
+<div class="mini-line-card"><h4>Canada</h4><p class="mini-trend-caption"><span class="conf">Confident 43 → 42</span><span class="no-conf">Not confident 56 → 57</span></p><div class="dual-trend"><svg preserveaspectratio="none" viewbox="0 0 300 170">
+<line class="axis-grid" x1="42" x2="274" y1="35" y2="35"></line><line class="axis-grid" x1="42" x2="274" y1="92.5" y2="92.5"></line><line class="axis-base" x1="42" x2="274" y1="150" y2="150"></line><line class="axis-base" x1="42" x2="42" y1="35" y2="150"></line>
+<text class="axis-text" x="8" y="38">100</text><text class="axis-text" x="16" y="96">50</text><text class="axis-text" x="23" y="153">0</text>
+<path class="chart-path trend-line-conf" d="M70 100.6 L240 101.7"></path><path class="chart-path trend-line-no-conf" d="M70 85.6 L240 84.5"></path>
+<g><circle class="circle trend-dot-conf" cx="70" cy="100.6" r="6"></circle><circle class="circle trend-dot-conf" cx="240" cy="101.7" r="6"></circle></g><g><circle class="circle trend-dot-no-conf" cx="70" cy="85.6" r="6"></circle><circle class="circle trend-dot-no-conf" cx="240" cy="84.5" r="6"></circle></g>
+<g><text class="trend-label-conf" text-anchor="middle" x="70" y="120.6">43</text><text class="trend-label-conf" text-anchor="middle" x="240" y="121.7">42</text><text class="trend-label-no-conf" text-anchor="middle" x="70" y="75.6">56</text><text class="trend-label-no-conf" text-anchor="middle" x="240" y="74.5">57</text></g>
+</svg></div><div class="trend-labels points-2"><span>2025</span><span>2026</span></div></div>
+</div></div>
+</section>
+<div class="bottom-source">Source: Pew Research Center survey, March 23–29, 2026. “Gas Prices Are Americans’ Top Concern in Iran War.” Note: Those who did not answer are not shown.</div>
+</main>
+</div>
+<script>
+    const sections = [...document.querySelectorAll('.story-section')];
+    const navItems = [...document.querySelectorAll('.nav-item')];
+    function fillSquares() {
+      document.querySelectorAll('.square-row').forEach(row => {
+        const count = Number(row.dataset.count || 0);
+        const fill = row.dataset.fill || 'blue';
+        row.innerHTML = Array.from({length:10}, (_, i) => `<span class="sq ${i < count ? fill : ''}"></span>`).join('');
+      });
+      document.querySelectorAll('.dots, .dot-strip').forEach(row => {
+        const count = Number(row.dataset.count || 0);
+        const color = row.dataset.color || 'blue';
+        row.innerHTML = Array.from({length:14}, (_, i) => `<span class="tiny-dot ${i < count ? color : ''}"></span>`).join('');
+      });
+    }
+    fillSquares();
+    function setActiveSection(id) {
+      sections.forEach(section => section.classList.toggle('active', section.id === id));
+      navItems.forEach(item => item.classList.toggle('active', item.dataset.target === id));
+
+      const activeItem = document.querySelector(`.nav-item[data-target="${id}"]`);
+      const sideRail = document.querySelector('aside');
+      if (activeItem && sideRail) {
+        const itemTop = activeItem.offsetTop;
+        const itemBottom = itemTop + activeItem.offsetHeight;
+        const viewTop = sideRail.scrollTop;
+        const viewBottom = viewTop + sideRail.clientHeight;
+        const padding = 72;
+
+        if (itemTop < viewTop + padding || itemBottom > viewBottom - padding) {
+          sideRail.scrollTo({
+            top: Math.max(0, itemTop - sideRail.clientHeight * 0.38),
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+
+    function updateActiveSection() {
+      const marker = window.innerHeight * 0.42;
+      let current = sections[0].id;
+
+      sections.forEach(section => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= marker && rect.bottom >= marker) {
+          current = section.id;
+        }
+      });
+
+      // Fallback for very tall sections or fast scrolling: choose the section closest to the marker.
+      if (!current) {
+        let bestDistance = Infinity;
+        sections.forEach(section => {
+          const rect = section.getBoundingClientRect();
+          const distance = Math.min(Math.abs(rect.top - marker), Math.abs(rect.bottom - marker));
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            current = section.id;
+          }
+        });
+      }
+      setActiveSection(current);
+    }
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updateActiveSection();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+    window.addEventListener('resize', updateActiveSection);
+    updateActiveSection();
+
+    // Reveal long outcomes blocks one by one so animations remain visible inside the tall section.
+    const outcomeBlocks = [...document.querySelectorAll('#outcomes .card, #outcomes .age-detail-card, #outcomes .comparison-card')];
+    const outcomeObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        // Add when visible, remove when it leaves the viewport.
+        // This matches the other sections: scrolling away resets the chart,
+        // and scrolling back replays the animation.
+        entry.target.classList.toggle('in-view', entry.isIntersecting);
+      });
+    }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' });
+    outcomeBlocks.forEach(block => outcomeObserver.observe(block));
+  </script>
+</body>
+</html>
