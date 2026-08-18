@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CHI 2027 Quantitative Analysis Dashboard</title>
+<style>
+:root {
+  --bg:#f6f7fb; --card:#ffffff; --text:#171a21; --muted:#6a7280; --line:#e4e7ee;
+  --c1:#7c2d12; --c2:#c2410c; --c3:#cbd5e1; --c4:#2563eb; --c5:#1d4ed8;
+  --accent:#111827;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+.wrapper{max-width:1450px;margin:0 auto;padding:34px 28px 64px}
+.hero{display:flex;justify-content:space-between;gap:28px;align-items:flex-end;margin-bottom:26px}
+.hero h1{font-size:34px;line-height:1.1;margin:0 0 8px;letter-spacing:-.03em}
+.hero p{margin:0;color:var(--muted);max-width:800px;line-height:1.55}
+.badge{background:#111827;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;white-space:nowrap}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0 26px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.kpi .name{font-size:13px;color:var(--muted);margin-bottom:6px}
+.kpi .value{font-size:28px;font-weight:750;letter-spacing:-.02em}
+.kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.section{margin-top:26px}
+.section h2{font-size:22px;margin:0 0 8px;letter-spacing:-.02em}
+.section .desc{color:var(--muted);margin:0 0 16px;line-height:1.55}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 16px}
+button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:600}
+button.active{background:#111827;color:#fff;border-color:#111827}
+.likert-card{padding:18px 18px 14px}
+.q-title{font-weight:700;margin-bottom:14px;line-height:1.35}
+.format-row{display:grid;grid-template-columns:145px 1fr 90px;gap:12px;align-items:center;margin:11px 0}
+.format-name{font-size:13px;font-weight:650}
+.bar{height:24px;display:flex;border-radius:7px;overflow:hidden;background:#eef1f5}
+.seg{height:100%;min-width:0;position:relative}
+.seg:hover::after{content:attr(data-tip);position:absolute;z-index:10;bottom:29px;left:50%;transform:translateX(-50%);background:#111827;color:white;padding:6px 8px;border-radius:6px;font-size:11px;white-space:nowrap}
+.median{font-size:12px;color:var(--muted);text-align:right}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;font-size:12px;color:var(--muted)}
+.legend span::before{content:"";width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px;vertical-align:-1px;background:var(--lc)}
+.two-col{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+.reading-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:end;height:260px;padding:14px 6px 4px}
+.rt-col{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;position:relative}
+.rt-bar{width:58%;background:#111827;border-radius:10px 10px 3px 3px;position:relative;min-height:4px}
+.rt-bar .rt-label{position:absolute;top:-24px;width:100%;text-align:center;font-size:12px;font-weight:700}
+.rt-name{margin-top:8px;font-size:12px;text-align:center}
+.rt-range{font-size:11px;color:var(--muted);margin-top:3px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+table{border-collapse:collapse;width:100%;min-width:850px}
+th,td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:center;font-size:12px}
+th{position:sticky;top:0;background:#fafbfc;font-weight:750}
+td:first-child,th:first-child{text-align:left}
+.roadmap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.step .num{font-size:12px;color:var(--muted);margin-bottom:6px}
+.step h3{margin:0 0 7px;font-size:15px}
+.step p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.note{border-left:4px solid #111827;background:#fff;padding:14px 16px;border-radius:10px;color:#3f4652;line-height:1.55}
+.footer{margin-top:30px;color:var(--muted);font-size:12px}
+@media(max-width:900px){
+  .grid4,.roadmap{grid-template-columns:repeat(2,1fr)}
+  .two-col{grid-template-columns:1fr}
+  .format-row{grid-template-columns:110px 1fr 70px}
+}
+@media(max-width:600px){
+  .wrapper{padding:22px 14px 44px}
+  .hero{align-items:flex-start;flex-direction:column}
+  .grid4,.roadmap{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="hero">
+    <div>
+      <h1>Quantitative Analysis Dashboard</h1>
+      <p>CHI 2027 interview study · 24 participants · 4 narrative visualization formats · 9 Likert items + reading time.</p>
+    </div>
+    <div class="badge">Exploratory mixed-methods analysis</div>
+  </div>
+
+  <div class="grid4" id="kpis"></div>
+
+  <section class="section">
+    <h2>Likert response distributions</h2>
+    <p class="desc">Each bar shows the six responses within a format. Because n=6 per group, one participant equals 16.7% of the bar. Median scores use Strongly disagree=1 to Strongly agree=5.</p>
+    <div class="controls" id="qButtons"></div>
+    <div class="card likert-card">
+      <div class="q-title" id="qTitle"></div>
+      <div id="likertRows"></div>
+      <div class="legend">
+        <span style="--lc:var(--c1)">Strongly disagree</span>
+        <span style="--lc:var(--c2)">Disagree</span>
+        <span style="--lc:var(--c3)">Neutral</span>
+        <span style="--lc:var(--c4)">Agree</span>
+        <span style="--lc:var(--c5)">Strongly agree</span>
+      </div>
+    </div>
+  </section>
+
+  
+<section class="section">
+  <h2>Reading time by format</h2>
+  <p class="desc">Mean reading time ± standard deviation (SD), with the observed minimum–maximum range shown below each format.</p>
+  <div class="card"><div class="reading-wrap" id="readingChart"></div></div>
+</section>
+
+
+  <section class="section">
+    <h2>Median Likert scores by format</h2>
+    <p class="desc">A compact descriptive table for checking format-level patterns before inferential testing.</p>
+    <div class="table-wrap"><table id="medianTable"></table></div>
+  </section>
+
+  <div class="footer">Generated from the 24 rows provided in the conversation. This dashboard is descriptive; inferential statistics should be reported as exploratory given the small per-format sample.</div>
+</div>
+
+<script>
+const P = {"data": [{"likert": ["Agree", "Disagree", "Neither agree nor disagree", "Agree", "Strongly disagree", "Strongly agree", "Strongly agree", "Agree", "Agree"], "reading": 7, "comparison": null, "format": "Baseline"}, {"likert": ["Agree", "Strongly agree", "Agree", "Strongly agree", "Disagree", "Strongly agree", "Agree", "Agree", "Strongly agree"], "reading": 6, "comparison": null, "format": "Baseline"}, {"likert": ["Neither agree nor disagree", "Agree", "Agree", "Agree", "Disagree", "Neither agree nor disagree", "Agree", "Disagree", "Agree"], "reading": 10, "comparison": null, "format": "Baseline"}, {"likert": ["Strongly agree", "Neither agree nor disagree", "Strongly agree", "Strongly agree", "Neither agree nor disagree", "Strongly agree", "Neither agree nor disagree", "Neither agree nor disagree", "Neither agree nor disagree"], "reading": 14, "comparison": null, "format": "Baseline"}, {"likert": ["Agree", "Disagree", "Strongly agree", "Agree", "Neither agree nor disagree", "Agree", "Strongly agree", "Strongly agree", "Agree"], "reading": 19, "comparison": null, "format": "Baseline"}, {"likert": ["Agree", "Neither agree nor disagree", "Strongly agree", "Agree", "Neither agree nor disagree", "Agree", "Agree", "Agree", "Agree"], "reading": 12, "comparison": null, "format": "Baseline"}, {"likert": ["Strongly agree", "Neither agree nor disagree", "Strongly agree", "Strongly agree", "Disagree", "Agree", "Strongly agree", "Agree", "Strongly agree"], "reading": 11, "comparison": null, "format": "Scrollytelling"}, {"likert": ["Agree", "Agree", "Strongly agree", "Strongly agree", "Strongly disagree", "Strongly agree", "Strongly agree", "Strongly disagree", "Strongly agree"], "reading": 6, "comparison": null, "format": "Scrollytelling"}, {"likert": ["Agree", "Disagree", "Agree", "Agree", "Disagree", "Agree", "Neither agree nor disagree", "Neither agree nor disagree", "Neither agree nor disagree"], "reading": 7, "comparison": 9, "format": "Scrollytelling"}, {"likert": ["Agree", "Strongly disagree", "Strongly agree", "Disagree", "Strongly agree", "Agree", "Neither agree nor disagree", "Disagree", "Agree"], "reading": 6, "comparison": null, "format": "Scrollytelling"}, {"likert": ["Agree", "Neither agree nor disagree", "Strongly agree", "Agree", "Disagree", "Neither agree nor disagree", "Agree", "Disagree", "Neither agree nor disagree"], "reading": 8, "comparison": 10, "format": "Scrollytelling"}, {"likert": ["Agree", "Disagree", "Strongly agree", "Disagree", "Strongly disagree", "Strongly agree", "Strongly agree", "Agree", "Agree"], "reading": 8, "comparison": 7, "format": "Scrollytelling"}, {"likert": ["Strongly agree", "Strongly agree", "Strongly agree", "Strongly agree", "Strongly disagree", "Strongly agree", "Strongly agree", "Agree", "Strongly agree"], "reading": 12, "comparison": null, "format": "Data Comic"}, {"likert": ["Agree", "Agree", "Strongly agree", "Agree", "Disagree", "Neither agree nor disagree", "Agree", "Agree", "Strongly agree"], "reading": 15, "comparison": 10, "format": "Data Comic"}, {"likert": ["Agree", "Disagree", "Neither agree nor disagree", "Agree", "Disagree", "Agree", "Neither agree nor disagree", "Neither agree nor disagree", "Neither agree nor disagree"], "reading": 5, "comparison": null, "format": "Data Comic"}, {"likert": ["Agree", "Strongly agree", "Strongly agree", "Strongly agree", "Strongly disagree", "Strongly agree", "Strongly agree", "Strongly agree", "Strongly agree"], "reading": 5, "comparison": null, "format": "Data Comic"}, {"likert": ["Agree", "Agree", "Agree", "Disagree", "Neither agree nor disagree", "Neither agree nor disagree", "Neither agree nor disagree", "Disagree", "Neither agree nor disagree"], "reading": 7, "comparison": 8, "format": "Data Comic"}, {"likert": ["Strongly agree", "Strongly agree", "Strongly agree", "Strongly agree", "Strongly disagree", "Strongly agree", "Strongly agree", "Strongly agree", "Strongly agree"], "reading": 10, "comparison": 7, "format": "Data Comic"}, {"likert": ["Strongly agree", "Disagree", "Disagree", "Agree", "Agree", "Strongly agree", "Strongly disagree", "Neither agree nor disagree", "Strongly agree"], "reading": 10, "comparison": 5, "format": "Data Video"}, {"likert": ["Neither agree nor disagree", "Disagree", "Agree", "Agree", "Neither agree nor disagree", "Strongly agree", "Agree", "Agree", "Agree"], "reading": 11, "comparison": 10, "format": "Data Video"}, {"likert": ["Strongly agree", "Neither agree nor disagree", "Strongly agree", "Neither agree nor disagree", "Strongly disagree", "Strongly agree", "Strongly agree", "Agree", "Neither agree nor disagree"], "reading": 13, "comparison": 5, "format": "Data Video"}, {"likert": ["Agree", "Disagree", "Strongly agree", "Strongly agree", "Strongly disagree", "Strongly agree", "Agree", "Agree", "Strongly agree"], "reading": 14, "comparison": 5, "format": "Data Video"}, {"likert": ["Agree", "Agree", "Strongly agree", "Disagree", "Disagree", "Agree", "Neither agree nor disagree", "Disagree", "Agree"], "reading": 9, "comparison": null, "format": "Data Video"}, {"likert": ["Agree", "Agree", "Agree", "Agree", "Disagree", "Agree", "Agree", "Agree", "Agree"], "reading": 12, "comparison": null, "format": "Data Video"}], "summary": {"Baseline": {"n": 6, "reading": {"median": 11.0, "q1": 7, "q3": 14, "min": 6, "max": 19, "values": [7, 6, 10, 14, 19, 12]}, "questions": [{"median": 4.0, "q1": 4, "q3": 4, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 4, "Strongly agree": 1}}, {"median": 3.0, "q1": 2, "q3": 4, "dist": {"Strongly disagree": 0, "Disagree": 2, "Neither agree nor disagree": 2, "Agree": 1, "Strongly agree": 1}}, {"median": 4.5, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 2, "Strongly agree": 3}}, {"median": 4.0, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 0, "Agree": 4, "Strongly agree": 2}}, {"median": 2.5, "q1": 2, "q3": 3, "dist": {"Strongly disagree": 1, "Disagree": 2, "Neither agree nor disagree": 3, "Agree": 0, "Strongly agree": 0}}, {"median": 4.5, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 2, "Strongly agree": 3}}, {"median": 4.0, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 3, "Strongly agree": 2}}, {"median": 4.0, "q1": 3, "q3": 4, "dist": {"Strongly disagree": 0, "Disagree": 1, "Neither agree nor disagree": 1, "Agree": 3, "Strongly agree": 1}}, {"median": 4.0, "q1": 4, "q3": 4, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 4, "Strongly agree": 1}}]}, "Scrollytelling": {"n": 6, "reading": {"median": 7.5, "q1": 6, "q3": 8, "min": 6, "max": 11, "values": [11, 6, 7, 6, 8, 8]}, "questions": [{"median": 4.0, "q1": 4, "q3": 4, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 0, "Agree": 5, "Strongly agree": 1}}, {"median": 2.5, "q1": 2, "q3": 3, "dist": {"Strongly disagree": 1, "Disagree": 2, "Neither agree nor disagree": 2, "Agree": 1, "Strongly agree": 0}}, {"median": 5.0, "q1": 5, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 0, "Agree": 1, "Strongly agree": 5}}, {"median": 4.0, "q1": 2, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 2, "Neither agree nor disagree": 0, "Agree": 2, "Strongly agree": 2}}, {"median": 2.0, "q1": 1, "q3": 2, "dist": {"Strongly disagree": 2, "Disagree": 3, "Neither agree nor disagree": 0, "Agree": 0, "Strongly agree": 1}}, {"median": 4.0, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 3, "Strongly agree": 2}}, {"median": 4.5, "q1": 3, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 2, "Agree": 1, "Strongly agree": 3}}, {"median": 2.5, "q1": 2, "q3": 4, "dist": {"Strongly disagree": 1, "Disagree": 2, "Neither agree nor disagree": 1, "Agree": 2, "Strongly agree": 0}}, {"median": 4.0, "q1": 3, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 2, "Agree": 2, "Strongly agree": 2}}]}, "Data Comic": {"n": 6, "reading": {"median": 8.5, "q1": 5, "q3": 12, "min": 5, "max": 15, "values": [12, 15, 5, 5, 7, 10]}, "questions": [{"median": 4.0, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 0, "Agree": 4, "Strongly agree": 2}}, {"median": 4.5, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 1, "Neither agree nor disagree": 0, "Agree": 2, "Strongly agree": 3}}, {"median": 5.0, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 1, "Strongly agree": 4}}, {"median": 4.5, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 1, "Neither agree nor disagree": 0, "Agree": 2, "Strongly agree": 3}}, {"median": 1.5, "q1": 1, "q3": 2, "dist": {"Strongly disagree": 3, "Disagree": 2, "Neither agree nor disagree": 1, "Agree": 0, "Strongly agree": 0}}, {"median": 4.5, "q1": 3, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 2, "Agree": 1, "Strongly agree": 3}}, {"median": 4.5, "q1": 3, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 2, "Agree": 1, "Strongly agree": 3}}, {"median": 4.0, "q1": 3, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 1, "Neither agree nor disagree": 1, "Agree": 2, "Strongly agree": 2}}, {"median": 5.0, "q1": 3, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 2, "Agree": 0, "Strongly agree": 4}}]}, "Data Video": {"n": 6, "reading": {"median": 11.5, "q1": 10, "q3": 13, "min": 9, "max": 14, "values": [10, 11, 13, 14, 9, 12]}, "questions": [{"median": 4.0, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 3, "Strongly agree": 2}}, {"median": 2.5, "q1": 2, "q3": 4, "dist": {"Strongly disagree": 0, "Disagree": 3, "Neither agree nor disagree": 1, "Agree": 2, "Strongly agree": 0}}, {"median": 4.5, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 1, "Neither agree nor disagree": 0, "Agree": 2, "Strongly agree": 3}}, {"median": 4.0, "q1": 3, "q3": 4, "dist": {"Strongly disagree": 0, "Disagree": 1, "Neither agree nor disagree": 1, "Agree": 3, "Strongly agree": 1}}, {"median": 2.0, "q1": 1, "q3": 3, "dist": {"Strongly disagree": 2, "Disagree": 2, "Neither agree nor disagree": 1, "Agree": 1, "Strongly agree": 0}}, {"median": 5.0, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 0, "Agree": 2, "Strongly agree": 4}}, {"median": 4.0, "q1": 3, "q3": 4, "dist": {"Strongly disagree": 1, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 3, "Strongly agree": 1}}, {"median": 4.0, "q1": 3, "q3": 4, "dist": {"Strongly disagree": 0, "Disagree": 1, "Neither agree nor disagree": 1, "Agree": 4, "Strongly agree": 0}}, {"median": 4.0, "q1": 4, "q3": 5, "dist": {"Strongly disagree": 0, "Disagree": 0, "Neither agree nor disagree": 1, "Agree": 3, "Strongly agree": 2}}]}}, "questions": ["I can explain the central message of the story.", "There was only one central message presented in the story.", "The information in the text and chart supported each other.", "The story provided sufficient context for understanding the issue.", "There was information in the story that was not relevant to the central message.", "The story encouraged me to think more deeply about the topic.", "The story handled the topic in a way that felt appropriate.", "The story encouraged me to consider perspectives I had not previously considered.", "I want to learn more about this topic after engaging with the story."], "formats": ["Baseline", "Scrollytelling", "Data Comic", "Data Video"], "labels": ["Strongly disagree", "Disagree", "Neither agree nor disagree", "Agree", "Strongly agree"]};
+const colors = ["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)"];
+
+function fmtNum(x) { return Number.isInteger(x) ? x.toFixed(0) : x.toFixed(1); }
+
+function buildKPIs(){
+  const el=document.getElementById("kpis");
+  const items=[
+    ["Participants","24","6 per format"],
+    ["Formats","4","Baseline · Scrollytelling · Comic · Video"],
+    ["Likert items","9","5-point agreement scale"],
+    ["Primary time measure","Reading Time","comparison time kept separate"]
+  ];
+  el.innerHTML=items.map(x=>`<div class="card kpi"><div class="name">${x[0]}</div><div class="value">${x[1]}</div><div class="sub">${x[2]}</div></div>`).join("");
+}
+
+let activeQ=0;
+function renderButtons(){
+  document.getElementById("qButtons").innerHTML=P.questions.map((q,i)=>`<button class="${i===activeQ?"active":""}" onclick="setQ(${i})">Q${i+1}</button>`).join("");
+}
+function setQ(i){ activeQ=i; renderButtons(); renderLikert(); }
+function renderLikert(){
+  document.getElementById("qTitle").textContent=`Q${activeQ+1}. ${P.questions[activeQ]}`;
+  let html="";
+  for(const f of P.formats){
+    const s=P.summary[f].questions[activeQ];
+    let segs="";
+    P.labels.forEach((lab,idx)=>{
+      const n=s.dist[lab];
+      const pct=n/6*100;
+      segs += `<div class="seg" style="width:${pct}%;background:${colors[idx]}" data-tip="${lab}: ${n} / 6"></div>`;
+    });
+    html += `<div class="format-row">
+      <div class="format-name">${f}</div>
+      <div class="bar">${segs}</div>
+      <div class="median">Median ${fmtNum(s.median)}</div>
+    </div>`;
+  }
+  document.getElementById("likertRows").innerHTML=html;
+}
+
+function renderReading(){
+  const groups = {
+    "Baseline":[7,6,10,14,19,12],
+    "Scrollytelling":[11,6,7,6,8,8],
+    "Data Comic":[12,15,5,5,7,10],
+    "Data Video":[10,11,13,14,9,12]
+  };
+
+  function mean(a){
+    return a.reduce((x,y)=>x+y,0)/a.length;
+  }
+  function sampleSD(a){
+    const m=mean(a);
+    return Math.sqrt(a.reduce((s,x)=>s + Math.pow(x-m,2),0)/(a.length-1));
+  }
+
+  const maxMean = 13;
+  document.getElementById("readingChart").innerHTML=P.formats.map(f=>{
+    const vals=groups[f];
+    const m=mean(vals);
+    const sd=sampleSD(vals);
+    const minV=Math.min(...vals);
+    const maxV=Math.max(...vals);
+    const h=m/maxMean*210;
+    return `<div class="rt-col">
+      <div class="rt-bar" style="height:${h}px">
+        <div class="rt-label">${m.toFixed(1)} ± ${sd.toFixed(1)} min</div>
+      </div>
+      <div class="rt-name">${f}</div>
+      <div class="rt-range">${minV}–${maxV} min</div>
+    </div>`;
+  }).join("");
+}
+
+function renderTable(){
+  let h=`<thead><tr><th>Item</th>${P.formats.map(f=>`<th>${f}</th>`).join("")}</tr></thead><tbody>`;
+  P.questions.forEach((q,qi)=>{
+    h += `<tr><td><strong>Q${qi+1}</strong> · ${q}</td>`;
+    P.formats.forEach(f=>{
+      const s=P.summary[f].questions[qi];
+      h += `<td>${fmtNum(s.median)} <span style="color:#6a7280">[IQR ${fmtNum(s.q1)}–${fmtNum(s.q3)}]</span></td>`;
+    });
+    h += `</tr>`;
+  });
+  h += `</tbody>`;
+  document.getElementById("medianTable").innerHTML=h;
+}
+
+buildKPIs();
+renderButtons();
+renderLikert();
+renderReading();
+renderTable();
+</script>
+</body>
+</html>
